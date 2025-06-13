@@ -37,14 +37,20 @@
         </a>
         <div id="collapseMasterData" class="collapse" aria-labelledby="headingMasterData" data-parent="#accordionSidebar">
             <div class="bg-dark py-2 collapse-inner rounded">
-                <a class="collapse-item text-light" href="#}">
-                    <i class="fas fa-users mr-2"></i> Data User
+                <a class="collapse-item text-light" href="{{ route('data_akun') }}">
+                    <i class="fas fa-users mr-2"></i> Data Akun
+                </a>
+                <a class="collapse-item text-light" href="{{ route('data_perorangan')}}">
+                    <i class="fas fa-users mr-2"></i> Data Perorangan
+                </a>
+                <a class="collapse-item text-light" href="{{ route('data_perusahaan') }}">
+                    <i class="fas fa-users mr-2"></i> Data Perusahaan
                 </a>
                 <a class="collapse-item text-light" href="#">
-                    <i class="fas fa-gas-pump mr-2"></i> Data Tabung
+                    <i class="fas fa-gas-pump mr-2"></i> Data Jenis Tabung
                 </a>
                 <a class="collapse-item text-light" href="#">
-                    <i class="fas fa-building mr-2"></i> Data Perusahaan
+                    <i class="fas fa-building mr-2"></i> Data Tabung
                 </a>
             </div>
         </div>
@@ -58,6 +64,27 @@
         <a class="nav-link" href="#">
             <i class="fas fa-fw fa-exchange-alt"></i>
             <span>Transaksi</span>
+        </a>
+    </li>
+    <!-- Tagihan -->
+    <li class="nav-item">
+        <a class="nav-link" href="#">
+            <i class="fas fa-fw fa-exchange-alt"></i>
+            <span>Tagihan</span>
+        </a>
+    </li>
+    <!-- Peminjaman -->
+    <li class="nav-item">
+        <a class="nav-link" href="#">
+            <i class="fas fa-fw fa-exchange-alt"></i>
+            <span>Peminjaman</span>
+        </a>
+    </li>
+    <!-- Pengembalian -->
+    <li class="nav-item">
+        <a class="nav-link" href="#">
+            <i class="fas fa-fw fa-exchange-alt"></i>
+            <span>Pengembalian</span>
         </a>
     </li>
 
