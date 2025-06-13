@@ -32,15 +32,17 @@
                 <td>{{ $akun->email }}</td>
                 <td>{{ ucfirst($akun->role) }}</td>
                 <td>{{ $akun->status_aktif ? 'Aktif' : 'Tidak Aktif' }}</td>
-                <td>{{ $akun->perorangan->nama_lengkap ?? '-' }}</td>
                 <td>
-                    <a href="{{ route('show_data_akun', $akun->id_akuns) }}" class="btn btn-info btn-sm" title="Detail">
+                    {{ $akun->perorangan ? $akun->perorangan->id_perorangan . ' - ' . $akun->perorangan->nama_lengkap . ' - ' . $akun->perorangan->nik : '-' }}
+                </td>
+                <td>
+                    <a href="{{ route('show_data_akun', $akun->id_akun) }}" class="btn btn-info btn-sm" title="Detail">
                         <i class="fas fa-eye"></i>
                     </a>
-                    <a href="#" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#editModal{{ $akun->id_akuns }}" title="Edit">
+                    <a href="#" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#editModal{{ $akun->id_akun }}" title="Edit">
                         <i class="fas fa-edit"></i>
                     </a>
-                    <form action="{{ route('delete_akun', $akun->id_akuns) }}" method="POST" class="d-inline">
+                    <form action="{{ route('delete_akun', $akun->id_akun) }}" method="POST" class="d-inline">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Yakin hapus akun ini?')" title="Hapus">
@@ -60,26 +62,24 @@
 @section('scripts')
 <script>
     $(document).ready(function () {
-        // Modal Tambah
         $('#addModal').on('shown.bs.modal', function () {
             $('#addIdPerorangan').select2({
                 dropdownParent: $('#addModal'),
-                placeholder: "-- Pilih ID & Nama Perorangan --",
+                placeholder: "-- Pilih ID, Nama, dan NIK Perorangan --",
                 allowClear: true,
                 width: '100%'
             });
         });
 
-        // Modal Edit untuk setiap akun
         @foreach($akuns as $akun)
-            $('#editModal{{ $akun->id_akuns }}').on('shown.bs.modal', function () {
-                $('#editIdPerorangan{{ $akun->id_akuns }}').select2({
-                    dropdownParent: $('#editModal{{ $akun->id_akuns }}'),
-                    placeholder: "-- Pilih ID & Nama Perorangan --",
-                    allowClear: true,
-                    width: '100%'
-                });
+        $('#editModal{{ $akun->id_akun }}').on('shown.bs.modal', function () {
+            $('#editIdPerorangan{{ $akun->id_akun }}').select2({
+                dropdownParent: $('#editModal{{ $akun->id_akun }}'),
+                placeholder: "-- Pilih ID, Nama, dan NIK Perorangan --",
+                allowClear: true,
+                width: '100%'
             });
+        });
         @endforeach
     });
 </script>

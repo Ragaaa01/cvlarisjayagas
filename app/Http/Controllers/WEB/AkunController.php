@@ -10,21 +10,19 @@ use Illuminate\Support\Facades\Hash;
 
 class AkunController extends Controller
 {
-      public function data_akun()
-{
-    $akuns = Akun::with('perorangan')->get();
+     public function data_akun()
+    {
+        $akuns = Akun::with('perorangan')->get();
 
-    // Ambil semua ID perorangan yang sudah dipakai
-    $usedPeroranganIds = Akun::whereNotNull('id_perorangan')->pluck('id_perorangan')->toArray();
+        // Ambil semua ID perorangan yang sudah dipakai
+        $usedPeroranganIds = Akun::whereNotNull('id_perorangan')->pluck('id_perorangan')->toArray();
 
-    // Ambil perorangan yang belum digunakan (untuk tambah akun)
-    $perorangans = Perorangan::whereNotIn('id_perorangan', $usedPeroranganIds)->get();
+        // Ambil perorangan yang belum digunakan (untuk tambah akun)
+        $perorangans = Perorangan::whereNotIn('id_perorangan', $usedPeroranganIds)->get();
 
-    return view('admin.pages.akun.data_akun', compact('akuns', 'perorangans'));
-}
+        return view('admin.pages.akun.data_akun', compact('akuns', 'perorangans'));
+    }
 
-
-    // Menampilkan detail akun tertentu
     public function show($id)
     {
         $akun = Akun::with('perorangan')->findOrFail($id);
@@ -56,7 +54,7 @@ class AkunController extends Controller
         $akun = Akun::findOrFail($id);
 
         $validated = $request->validate([
-            'email' => 'required|email|unique:akuns,email,' . $id . ',id_akuns',
+            'email' => 'required|email|unique:akuns,email,' . $id . ',id_akun',
             'role' => 'required|in:administrator,pelanggan',
             'id_perorangan' => 'nullable|numeric'
         ]);
@@ -71,10 +69,9 @@ class AkunController extends Controller
         return redirect()->route('data_akun')->with('success', 'Akun berhasil diperbarui.');
     }
 
-
-public function destroy($id)
-{
-    Akun::destroy($id);
-    return redirect()->route('data_akun')->with('success', 'Akun berhasil dihapus');
-}
+    public function destroy($id)
+    {
+        Akun::destroy($id);
+        return redirect()->route('data_akun')->with('success', 'Akun berhasil dihapus');
+    }
 }

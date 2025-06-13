@@ -20,6 +20,7 @@ return new class extends Migration
             $table->boolean('status_aktif')->default(false);
             $table->string('remember_token')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('id_perorangan')->references('id_perorangan')->on('perorangans')->onDelete('cascade');
         });

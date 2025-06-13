@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('nama_jenis');
             $table->unsignedBigInteger('harga');
             $table->timestamps();
+            $table->softDeletes();
         });
 
     }

@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id('id_status_transaksi');
             $table->enum('status', ['success', 'pending', 'failed']);
             $table->timestamps();
+            $table->softDeletes();
         });
 
     }

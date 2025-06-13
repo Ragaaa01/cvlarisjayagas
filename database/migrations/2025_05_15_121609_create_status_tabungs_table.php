@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id('id_status_tabung');
             $table->enum('status_tabung', ['tersedia', 'dipinjam', 'rusak', 'hilang']);
             $table->timestamps();
+            $table->softDeletes();
         });
 
     }

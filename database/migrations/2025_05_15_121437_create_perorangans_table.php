@@ -19,6 +19,7 @@ return new class extends Migration
             $table->text('alamat');
             $table->unsignedBigInteger('id_perusahaan')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('id_perusahaan')->references('id_perusahaan')->on('perusahaans')->onDelete('set null');
         });

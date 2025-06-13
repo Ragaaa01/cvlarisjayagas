@@ -15,6 +15,7 @@ return new class extends Migration
     $table->id('id_jenis_transaksi');
     $table->string('nama_jenis_transaksi'); // peminjaman, isi ulang
     $table->timestamps();
+    $table->softDeletes();
 });
 
     }

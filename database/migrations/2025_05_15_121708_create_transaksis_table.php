@@ -12,23 +12,25 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('transaksis', function (Blueprint $table) {
-            $table->id('id_transaksi');
-            $table->unsignedBigInteger('id_akun')->nullable();
-            $table->unsignedBigInteger('id_perorangan')->nullable();
-            $table->unsignedBigInteger('id_perusahaan')->nullable();
-            $table->date('tanggal_transaksi');
-            $table->time('waktu_transaksi');
-            $table->unsignedBigInteger('jumlah_dibayar');
-            $table->enum('metode_pembayaran', ['transfer', 'tunai']);
-            $table->unsignedBigInteger('id_status_transaksi');
-            $table->date('tanggal_jatuh_tempo')->nullable();
-            $table->timestamps();
+    $table->id('id_transaksi');
+    $table->unsignedBigInteger('id_akun')->nullable();
+    $table->unsignedBigInteger('id_perorangan')->nullable();
+    $table->unsignedBigInteger('id_perusahaan')->nullable();
+    $table->date('tanggal_transaksi');
+    $table->time('waktu_transaksi');
+    $table->unsignedBigInteger('total_transaksi'); // ✅ DIPINDAHKAN KE SINI
+    $table->unsignedBigInteger('jumlah_dibayar');
+    $table->enum('metode_pembayaran', ['transfer', 'tunai']);
+    $table->unsignedBigInteger('id_status_transaksi');
+    $table->date('tanggal_jatuh_tempo')->nullable();
+    $table->timestamps();
+    $table->softDeletes();
 
-            $table->foreign('id_akun')->references('id_akun')->on('akuns')->onDelete('set null');
-            $table->foreign('id_perorangan')->references('id_perorangan')->on('perorangans')->onDelete('set null');
-            $table->foreign('id_perusahaan')->references('id_perusahaan')->on('perusahaans')->onDelete('set null');
-            $table->foreign('id_status_transaksi')->references('id_status_transaksi')->on('status_transaksis')->onDelete('cascade');
-        });
+    $table->foreign('id_akun')->references('id_akun')->on('akuns')->onDelete('set null');
+    $table->foreign('id_perorangan')->references('id_perorangan')->on('perorangans')->onDelete('set null');
+    $table->foreign('id_perusahaan')->references('id_perusahaan')->on('perusahaans')->onDelete('set null');
+    $table->foreign('id_status_transaksi')->references('id_status_transaksi')->on('status_transaksis')->onDelete('cascade');
+});
 
     }
 
