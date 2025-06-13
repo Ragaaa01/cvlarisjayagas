@@ -16,10 +16,10 @@ return new class extends Migration
     $table->unsignedBigInteger('id_transaksi');
     $table->decimal('jumlah_dibayar', 10, 2);
     $table->decimal('sisa', 10, 2);
-    $table->enum('status', ['lunas', 'belum lunas']);
+    $table->enum('status', ['lunas', 'belum_lunas']);
     $table->date('tanggal_bayar_tagihan')->nullable();
     $table->integer('hari_keterlambatan')->nullable();
-    $table->integer('periode_ke');
+    $table->integer('periode_ke')->default(0);
     $table->text('keterangan')->nullable();
     $table->timestamps();
 

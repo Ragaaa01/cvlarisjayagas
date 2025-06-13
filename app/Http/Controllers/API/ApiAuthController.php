@@ -16,13 +16,20 @@ public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|unique:akuns,email',
-            'password' => 'required|min:6|confirmed', // Gunakan field "password_confirmation"
+            'password' => 'required|min:8|confirmed', // Gunakan field "password_confirmation"
+        ], [
+            'email.unique' => 'Email sudah terdaftar. Silakan gunakan email lain atau login.',
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'password.required' => 'Password wajib diisi.',
+            'password.min' => 'Password minimal 8 karakter.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validasi gagal',
+                'message' => $validator->errors()->first(),
                 'errors' => $validator->errors(),
             ], 422);
         }
@@ -34,11 +41,11 @@ public function register(Request $request)
             'status_aktif' => false, // Tidak langsung aktif
         ]);
 
-        return response()->json([
+        return response()->json([   
             'success' => true,
-            'message' => 'Registrasi berhasil! Akun Anda akan segera diaktifkan oleh admin.',
+            'message' => 'Pendaftaran berhasil! Akun Anda akan aktif setelah dikonfirmasi oleh Administrator.',
             'data' => [
-                'akun_id' => $akun->id_akuns,
+                'id_akun' => $akun->id_akun,
                 'email' => $akun->email,
                 'role' => $akun->role,
                 'status_aktif' => $akun->status_aktif,
@@ -85,18 +92,35 @@ public function register(Request $request)
             'message' => 'Login sukses',
             'token' => $token,
             'data' => [  
-                'akun_id' => $akun->id_akuns,
+                'id_akun' => $akun->id_akun,
                 'email' => $akun->email,
                 'role' => $akun->role,
             ]
         ], 200);
     }
 
-    public function logout(Request $request) {
-        
-        // return "oke";
-        $request->user()->tokens()->delete();
-        
-        return response()->json(['message' => 'Logged out Berhasil']);
+    public function logout(Request $request) 
+    {
+    try {
+        $user = Auth::user();
+        if ($user) {
+            $user->tokens()->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'Berhasil logout',
+            ], 200);
+        }
+        return response()->json([
+            'success' => false,
+            'message' => 'User tidak terautentikasi',
+        ], 401);
+    } catch (\Exception $e) {
+        \Log::error('Logout error', ['error' => $e->getMessage()]);
+        return response()->json([
+            'success' => false,
+            'message' => 'Gagal logout: ' . $e->getMessage(),
+        ], 500);
     }
+}
+
 }

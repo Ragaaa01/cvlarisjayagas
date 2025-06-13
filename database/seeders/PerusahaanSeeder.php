@@ -16,9 +16,9 @@ class PerusahaanSeeder extends Seeder
         DB::table('perusahaans')->insert([
             [
                 'id_perusahaan' => 1,
-                'nama_perusahaan' => 'Gas Industri Indonesia',
-                'alamat_perusahaan' => 'Jl. Industri Raya No.1, Jakarta',
-                'email_perusahaan' => 'info@gasindustri.co.id',
+                'nama_perusahaan' => 'CV Laris Jaya Gas',
+                'alamat_perusahaan' => 'Gang 2 Utara Karangampel, Indramayu',
+                'email_perusahaan' => 'larisjayagas@gasindustri.com',
             ],
             [
                 'id_perusahaan' => 2,

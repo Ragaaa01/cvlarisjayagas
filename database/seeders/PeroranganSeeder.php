@@ -16,18 +16,18 @@ class PeroranganSeeder extends Seeder
         DB::table('perorangans')->insert([
             [
                 'id_perorangan' => 1,
-                'nama_lengkap' => 'Budi Santoso',
+                'nama_lengkap' => 'Surendra Adhirajasa Kurnia',
                 'nik' => '320000000000000001',
-                'no_telepon' => '81234567890',
-                'alamat' => 'Jl. Merdeka No.1, Jakarta',
+                'no_telepon' => '082119128578',
+                'alamat' => 'Gang 2 Utara Karangampel',
                 'id_perusahaan' => 1,
             ],
             [
                 'id_perorangan' => 2,
-                'nama_lengkap' => 'Siti Rahayu',
+                'nama_lengkap' => 'Budi Santoso',
                 'nik' => '320000000000000002',
-                'no_telepon' => '81234567891',
-                'alamat' => 'Jl. Sudirman No.45, Bandung',
+                'no_telepon' => '081232129321',
+                'alamat' => 'Jl. Setia Budi No.93, Jakarta',
                 'id_perusahaan' => 2,
             ],
             [
@@ -252,6 +252,14 @@ class PeroranganSeeder extends Seeder
                 'nik' => '320000000000000030',
                 'no_telepon' => '81234567819',
                 'alamat' => 'Jl. Alamat 30',
+                'id_perusahaan' => null,
+            ],
+                        [
+                'id_perorangan' => 31,
+                'nama_lengkap' => 'Aditya Sukma Pratama',
+                'nik' => '3212150806040002',
+                'no_telepon' => '081355189353',
+                'alamat' => 'Jl. Mayor Sastraatmaja No.37, Indramayu',
                 'id_perusahaan' => null,
             ],
         ]);

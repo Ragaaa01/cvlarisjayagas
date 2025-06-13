@@ -11,7 +11,7 @@ class DetailTransaksi extends Model
     protected $primaryKey = 'id_detail_transaksi';
 
     protected $fillable = [
-        'id_transaksi', 'id_tabung', 'id_jenis_transaksi', 'harga', 'batas_waktu_peminjaman'
+        'id_transaksi', 'id_tabung', 'id_jenis_transaksi', 'harga', 'total_transaksi', 'batas_waktu_peminjaman'
     ];
 
     public function transaksi()

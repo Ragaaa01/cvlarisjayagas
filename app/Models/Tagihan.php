@@ -15,6 +15,20 @@ class Tagihan extends Model
         'tanggal_bayar_tagihan', 'hari_keterlambatan', 'periode_ke', 'keterangan'
     ];
 
+    public function calculateDenda() {
+        $transaksi = $this->transaksi;
+        if ($transaksi->tanggal_jatuh_tempo && now()->gt($transaksi->tanggal_jatuh_tempo)) {
+            $daysLate = now()->diffInDays($transaksi->tanggal_jatuh_tempo);
+            if ($daysLate > 30) {
+                $monthsLate = floor($daysLate / 30);
+                $denda = $monthsLate * 70000; // Rp70.000 per bulan
+                $this->sisa += $denda;
+                $this->keterangan = "Denda: Rp$denda";
+                $this->save();
+            }
+        }
+    }
+
     public function transaksi()
     {
         return $this->belongsTo(Transaksi::class, 'id_transaksi');

@@ -31,7 +31,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('id_transaksi')->references('id_transaksi')->on('transaksis')->onDelete('cascade');
-            $table->foreign('id_akun')->references('id_akuns')->on('akuns')->onDelete('set null');
+            $table->foreign('id_akun')->references('id_akun')->on('akuns')->onDelete('set null');
             $table->foreign('id_perorangan')->references('id_perorangan')->on('perorangans')->onDelete('set null');
             $table->foreign('id_perusahaan')->references('id_perusahaan')->on('perusahaans')->onDelete('set null');
         });
