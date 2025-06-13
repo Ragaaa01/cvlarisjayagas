@@ -12,17 +12,17 @@ class Tabung extends Model
 
     protected $fillable = ['kode_tabung', 'id_jenis_tabung', 'id_status_tabung'];
 
-    public function jenis()
+    public function jenisTabung()
     {
         return $this->belongsTo(JenisTabung::class, 'id_jenis_tabung');
     }
 
-    public function status()
+    public function statusTabung()
     {
         return $this->belongsTo(StatusTabung::class, 'id_status_tabung');
     }
 
-    public function detailTransaksis()
+    public function tabung()
     {
         return $this->hasMany(DetailTransaksi::class, 'id_tabung');
     }

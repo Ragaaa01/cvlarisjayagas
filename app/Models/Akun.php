@@ -12,10 +12,14 @@ class Akun extends Authenticatable // Extend Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $table = 'akuns';
-   protected $primaryKey = 'id_akuns';
+    protected $primaryKey = 'id_akun';
 
     protected $fillable = ['id_perorangan', 'email', 'password', 'role', 'status_aktif'];
      protected $hidden = ['password', 'remember_token'];
+     protected $casts = [
+    'id_akun' => 'integer',
+    'status_aktif' => 'boolean',
+];
 
     public function perorangan()
     {

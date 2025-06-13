@@ -15,31 +15,31 @@ class JenisTabungSeeder extends Seeder
     {
           DB::table('jenis_tabungs')->insert([
             [
-                'id_jenis_tabungs' => 1,
+                'id_jenis_tabung' => 1,
                 'kode_jenis' => 'O',
                 'nama_jenis' => 'Oksigen',
                 'harga' => 150000,
             ],
             [
-                'id_jenis_tabungs' => 2,
+                'id_jenis_tabung' => 2,
                 'kode_jenis' => 'N',
                 'nama_jenis' => 'Nitrogen',
                 'harga' => 175000,
             ],
             [
-                'id_jenis_tabungs' => 3,
+                'id_jenis_tabung' => 3,
                 'kode_jenis' => 'AR',
                 'nama_jenis' => 'Argon',
                 'harga' => 200000,
             ],
             [
-                'id_jenis_tabungs' => 4,
+                'id_jenis_tabung' => 4,
                 'kode_jenis' => 'ACE',
                 'nama_jenis' => 'Aceteline',
                 'harga' => 225000,
             ],
             [
-                'id_jenis_tabungs' => 5,
+                'id_jenis_tabung' => 5,
                 'kode_jenis' => 'N2O',
                 'nama_jenis' => 'Dinitrogen Oksida',
                 'harga' => 250000,
