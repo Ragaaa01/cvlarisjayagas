@@ -1,4 +1,3 @@
-
 <?php
 
 use App\Http\Controllers\API\ApiAdministratorController;
@@ -16,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [ApiAuthController::class, 'login']);
 Route::post('/register', [ApiAuthController::class, 'register']);
 
-    // Authenticated routes
+// Authenticated routes
 Route::middleware('auth:sanctum')->group(function () {
     // Logout
     Route::post('/logout', [ApiAuthController::class, 'logout']);
