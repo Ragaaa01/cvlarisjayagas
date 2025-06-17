@@ -18,7 +18,7 @@ return new class extends Migration
     $table->unsignedBigInteger('id_perusahaan')->nullable();
     $table->date('tanggal_transaksi');
     $table->time('waktu_transaksi');
-    $table->unsignedBigInteger('total_transaksi'); // ✅ DIPINDAHKAN KE SINI
+    $table->unsignedBigInteger('total_transaksi');
     $table->unsignedBigInteger('jumlah_dibayar');
     $table->enum('metode_pembayaran', ['transfer', 'tunai']);
     $table->unsignedBigInteger('id_status_transaksi');

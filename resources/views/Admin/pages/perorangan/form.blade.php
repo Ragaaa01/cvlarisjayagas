@@ -16,10 +16,10 @@
 </div>
 <div class="mb-3">
     <label>Perusahaan</label>
-    <select name="id_perusahaan" class="form-control">
+    <select name="id_perusahaan" class="form-control select2">
         <option value="">-- Pilih Perusahaan --</option>
-        @foreach($perusahaans as $perusahaan)
-            <option value="{{ $perusahaan->id_perusahaan }}">{{ $perusahaan->nama_perusahaan }}</option>
+        @foreach($perusahaans as $p)
+            <option value="{{ $p->id_perusahaan }}">{{ $p->nama_perusahaan }}</option>
         @endforeach
     </select>
 </div>

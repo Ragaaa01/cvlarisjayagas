@@ -43,7 +43,7 @@ class AkunController extends Controller
             'password' => Hash::make($validated['password']),
             'role' => $validated['role'],
             'status_aktif' => $request->has('status_aktif'),
-            'id_perorangan' => $validated['id_perorangan']
+             'id_perorangan' => $validated['id_perorangan'] ?? null,
         ]);
 
         return redirect()->route('data_akun')->with('success', 'Akun berhasil ditambahkan.');
@@ -63,7 +63,7 @@ class AkunController extends Controller
             'email' => $validated['email'],
             'role' => $validated['role'],
             'status_aktif' => $request->has('status_aktif'),
-            'id_perorangan' => $validated['id_perorangan']
+'id_perorangan' => $validated['id_perorangan'] ?? null,
         ]);
 
         return redirect()->route('data_akun')->with('success', 'Akun berhasil diperbarui.');
@@ -74,4 +74,26 @@ class AkunController extends Controller
         Akun::destroy($id);
         return redirect()->route('data_akun')->with('success', 'Akun berhasil dihapus');
     }
+
+    public function searchPerorangan(Request $request)
+{
+    $term = $request->get('q');
+
+    $results = Perorangan::where('id_perorangan', 'LIKE', "%$term%")
+        ->orWhere('nama_lengkap', 'LIKE', "%$term%")
+        ->orWhere('nik', 'LIKE', "%$term%")
+        ->limit(20)
+        ->get();
+
+    // Kembalikan dalam format yang langsung dipahami Select2
+    return response()->json(
+        $results->map(function ($item) {
+            return [
+                'id' => $item->id_perorangan,
+                'text' => "{$item->id_perorangan} - {$item->nama_lengkap} - {$item->nik}",
+            ];
+        })
+    );
+}
+
 }

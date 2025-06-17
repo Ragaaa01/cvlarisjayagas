@@ -4,8 +4,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\WEB\AkunController;
 use App\Http\Controllers\WEB\AuthController;
 use App\Http\Controllers\WEB\AdminController;
+use App\Http\Controllers\WEB\TabungController;
 use App\Http\Controllers\WEB\PeroranganController;
 use App\Http\Controllers\WEB\PerusahaanController;
+use App\Http\Controllers\WEB\JenisTabungController;
+use App\Http\Controllers\WEB\StatusTabungController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -33,6 +36,7 @@ Route::get('/admin/akuns/{id}', [AkunController::class, 'show'])->name('show_dat
 Route::post('/admin/akuns', [AkunController::class, 'store'])->name('store_akun');
 Route::put('/admin/akuns/{id}', [AkunController::class, 'update'])->name('update_akun');
 Route::delete('/admin/akuns/{id}', [AkunController::class, 'destroy'])->name('delete_akun');
+Route::get('/perorangan/search', [AkunController::class, 'searchPerorangan'])->name('search_perorangan');
 
 //Data Perorangan
 Route::get('/admin/perorangan', [PeroranganController::class, 'index'])->name('data_perorangan');
@@ -47,3 +51,27 @@ Route::post('/admin/perusahaan', [PerusahaanController::class, 'store'])->name('
 Route::put('/admin/perusahaan/{id}', [PerusahaanController::class, 'update'])->name('perusahaan.update');
 Route::delete('/admin/perusahaan/{id}', [PerusahaanController::class, 'destroy'])->name('perusahaan.destroy');
 Route::get('/admin/perusahaan/{id}', [PerusahaanController::class, 'show'])->name('perusahaan.show');
+
+//Data Jenis Tabung
+Route::get('/admin/jenis_tabung', [JenisTabungController::class, 'index'])->name('data_jenis_tabung');
+Route::post('/admin/jenis_tabung', [JenisTabungController::class, 'store'])->name('jenis_tabung.store');
+Route::put('/admin/jenis_tabung/{id}', [JenisTabungController::class, 'update'])->name('jenis_tabung.update');
+Route::delete('/admin/jenis_tabung/{id}', [JenisTabungController::class, 'destroy'])->name('jenis_tabung.destroy');
+Route::get('/admin/jenis_tabung/{id}', [JenisTabungController::class, 'show'])->name('jenis_tabung.show');
+
+//Data Status Tabung
+Route::get('/admin/status_tabung', [StatusTabungController::class, 'index'])->name('data_status_tabung');
+Route::post('/admin/status_tabung', [StatusTabungController::class, 'store'])->name('status_tabung.store');
+Route::put('/admin/status_tabung/{id}', [StatusTabungController::class, 'update'])->name('status_tabung.update');
+Route::delete('/admin/status_tabung/{id}', [StatusTabungController::class, 'destroy'])->name('status_tabung.destroy');
+Route::get('/admin/status_tabung/{id}', [StatusTabungController::class, 'show'])->name('jenis_tabung.show');
+
+//Data Tabung
+Route::get('/admin/tabung', [TabungController::class, 'index'])->name('data_tabung');
+Route::get('/admin/tabung/create', [TabungController::class, 'create'])->name('tabung.create');
+Route::post('/admin/tabung', [TabungController::class, 'store'])->name('tabung.store');
+Route::get('/admin/tabung/{id}', [TabungController::class, 'show'])->name('tabung.show');
+Route::get('/admin/tabung/{id}/edit', [TabungController::class, 'edit'])->name('tabung.edit');
+Route::put('/admin/tabung/{id}', [TabungController::class, 'update'])->name('tabung.update');
+Route::delete('/admin/tabung/{id}', [TabungController::class, 'destroy'])->name('tabung.destroy');
+

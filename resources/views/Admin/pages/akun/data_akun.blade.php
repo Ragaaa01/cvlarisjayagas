@@ -15,14 +15,14 @@
     </button>
 
     <table class="table table-bordered">
-        <thead>
+        <thead class="thead-light">
             <tr>
                 <th>Nomor</th>
                 <th>Email</th>
                 <th>Role</th>
                 <th>Status Aktif</th>
                 <th>Perorangan</th>
-                <th>Aksi</th>
+                <th class="text-center">Aksi</th>
             </tr>
         </thead>
         <tbody>
@@ -33,54 +33,77 @@
                 <td>{{ ucfirst($akun->role) }}</td>
                 <td>{{ $akun->status_aktif ? 'Aktif' : 'Tidak Aktif' }}</td>
                 <td>
-                    {{ $akun->perorangan ? $akun->perorangan->id_perorangan . ' - ' . $akun->perorangan->nama_lengkap . ' - ' . $akun->perorangan->nik : '-' }}
+                    {{ $akun->perorangan ? $akun->perorangan->nama_lengkap . ' - ' . $akun->perorangan->nik : '-' }}
                 </td>
-                <td>
-                    <a href="{{ route('show_data_akun', $akun->id_akun) }}" class="btn btn-info btn-sm" title="Detail">
-                        <i class="fas fa-eye"></i>
-                    </a>
-                    <a href="#" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#editModal{{ $akun->id_akun }}" title="Edit">
-                        <i class="fas fa-edit"></i>
-                    </a>
-                    <form action="{{ route('delete_akun', $akun->id_akun) }}" method="POST" class="d-inline">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Yakin hapus akun ini?')" title="Hapus">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </form>
+                <td class="text-center">
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="{{ route('show_data_akun', $akun->id_akun) }}" class="btn btn-info btn-sm mx-1" title="Detail">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="#" class="btn btn-warning btn-sm mx-1" data-toggle="modal" data-target="#editModal{{ $akun->id_akun }}" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form action="{{ route('delete_akun', $akun->id_akun) }}" method="POST" class="d-inline mx-1">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Yakin hapus akun ini?')" title="Hapus">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
                 </td>
             </tr>
             @endforeach
         </tbody>
     </table>
 
+    {{-- Include file modal --}}
     @include('admin.pages.akun.modals')
 </div>
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
     $(document).ready(function () {
-        $('#addModal').on('shown.bs.modal', function () {
-            $('#addIdPerorangan').select2({
-                dropdownParent: $('#addModal'),
-                placeholder: "-- Pilih ID, Nama, dan NIK Perorangan --",
-                allowClear: true,
-                width: '100%'
-            });
+        // Tambah akun
+        $('#addIdPerorangan').select2({
+            dropdownParent: $('#addModal'),
+            placeholder: "-- Pilih ID, Nama, dan NIK Perorangan --",
+            allowClear: true,
+            width: '100%',
+            ajax: {
+                url: '{{ route("search_perorangan") }}',
+                dataType: 'json',
+                delay: 250,
+                processResults: function (data) {
+                    return {
+                        results: data // Data sudah dalam bentuk {id, text}
+                    };
+                },
+                cache: true
+            }
         });
 
+        // Edit akun
         @foreach($akuns as $akun)
-        $('#editModal{{ $akun->id_akun }}').on('shown.bs.modal', function () {
-            $('#editIdPerorangan{{ $akun->id_akun }}').select2({
-                dropdownParent: $('#editModal{{ $akun->id_akun }}'),
-                placeholder: "-- Pilih ID, Nama, dan NIK Perorangan --",
-                allowClear: true,
-                width: '100%'
-            });
+        $('#editIdPerorangan{{ $akun->id_akun }}').select2({
+            dropdownParent: $('#editModal{{ $akun->id_akun }}'),
+            placeholder: "-- Pilih ID, Nama, dan NIK Perorangan --",
+            allowClear: true,
+            width: '100%',
+            ajax: {
+                url: '{{ route("search_perorangan") }}',
+                dataType: 'json',
+                delay: 250,
+                processResults: function (data) {
+                    return {
+                        results: data
+                    };
+                },
+                cache: true
+            }
         });
         @endforeach
     });
 </script>
-@endsection
+@endpush
