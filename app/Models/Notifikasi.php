@@ -12,6 +12,8 @@ class Notifikasi extends Model
 
     protected $fillable = ['id_tagihan', 'id_template', 'tanggal_terjadwal', 'status_baca', 'waktu_dikirim'];
 
+    protected $dates = ['tanggal_terjadwal', 'waktu_dikirim'];
+
     public function tagihan()
     {
         return $this->belongsTo(Tagihan::class, 'id_tagihan');

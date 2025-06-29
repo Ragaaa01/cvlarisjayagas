@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Notifikasi;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -10,7 +11,7 @@ class NotifikasiTemplate extends Model
     protected $table = 'notifikasi_template';
    protected $primaryKey = 'id_template';
 
-    protected $fillable = ['hari_set', 'nama_template', 'judul', 'isi'];
+    protected $fillable = ['nama_template', 'hari_set', 'judul', 'isi'];
 
     public function notifikasis()
     {

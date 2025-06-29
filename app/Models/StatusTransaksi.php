@@ -12,6 +12,10 @@ class StatusTransaksi extends Model
 
     protected $fillable = ['status'];
 
+    public const SUCCESS = 1;
+    public const PENDING = 2;
+    public const FAILED = 3;
+
     public function transaksis()
     {
         return $this->hasMany(Transaksi::class, 'id_status_transaksi');

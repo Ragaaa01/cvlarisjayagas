@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Notifikasi;
+use App\Models\Transaksi;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -11,11 +13,24 @@ class Tagihan extends Model
     protected $primaryKey = 'id_tagihan';
 
     protected $fillable = [
-        'id_transaksi', 'jumlah_dibayar', 'sisa', 'status',
-        'tanggal_bayar_tagihan', 'hari_keterlambatan', 'periode_ke', 'keterangan'
+        'id_transaksi',
+        'jumlah_dibayar',
+        'sisa',
+        'status',
+        'tanggal_bayar_tagihan',
+        'hari_keterlambatan',
+        'periode_ke',
+        'keterangan'
     ];
 
-    public function calculateDenda() {
+    protected $casts = [
+        'tanggal_bayar_tagihan' => 'date',
+        'jumlah_dibayar' => 'decimal:2',
+        'sisa' => 'decimal:2',
+    ];
+
+    public function calculateDenda()
+    {
         $transaksi = $this->transaksi;
         if ($transaksi->tanggal_jatuh_tempo && now()->gt($transaksi->tanggal_jatuh_tempo)) {
             $daysLate = now()->diffInDays($transaksi->tanggal_jatuh_tempo);

@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers\API;
 
-use Exception;
-use Carbon\Carbon;
+use App\Http\Controllers\Controller;
 use App\Models\Tagihan;
 use App\Models\Transaksi;
-use Illuminate\Http\Request;
+use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class ApiTagihanController extends Controller
@@ -24,7 +25,7 @@ class ApiTagihanController extends Controller
                     'success' => false,
                     'message' => 'Akses hanya untuk pelanggan'
                 ], 403);
-            }
+            }   
             return $next($request);
         });
     }
@@ -163,7 +164,7 @@ class ApiTagihanController extends Controller
                 ],
             ], 200);
         } catch (Exception $e) {
-            \Log::error('Gagal mengambil tanggal jatuh tempo terdekat', [
+            Log::error('Gagal mengambil tanggal jatuh tempo terdekat', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);

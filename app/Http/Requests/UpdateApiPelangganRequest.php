@@ -9,30 +9,45 @@ class UpdateApiPelangganRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true; // Sesuaikan dengan middleware autentikasi jika perlu
+        return auth()->user()->role === 'administrator';
     }
 
     public function rules(): array
     {
-        return [
-            'nama_lengkap' => ['sometimes', 'required', 'string', 'max:255'],
-            'nik' => ['sometimes', 'required', 'string', 'size:16', Rule::unique('perorangans', 'nik')->ignore($this->pelanggan, 'id_perorangan')],
-            'no_telepon' => ['sometimes', 'required', 'string', 'max:15', Rule::unique('perorangans', 'no_telepon')->ignore($this->pelanggan, 'id_perorangan')],
-            'alamat' => ['sometimes', 'required', 'string'],
-            'id_perusahaan' => ['nullable', 'exists:perusahaans,id_perusahaan'],
-            'email' => ['sometimes', 'required', 'email', Rule::unique('akuns', 'email')->ignore($this->pelanggan)],
-            'password' => ['sometimes', 'nullable', 'string', 'min:8', 'confirmed'],
-            'status_aktif' => ['sometimes', 'required', 'boolean'],
-        ];
-    }
+        $perorangan = $this->route('perorangan');
 
-    public function messages(): array
-    {
+        // Ambil ID dari route parameter 'id' (sesuai method update)
+        $id_perorangan = $this->route('id');
+
         return [
-            'nik.unique' => 'NIK sudah terdaftar.',
-            'no_telepon.unique' => 'Nomor telepon sudah terdaftar.',
-            'email.unique' => 'Email sudah terdaftar.',
-            'password.confirmed' => 'Konfirmasi password tidak cocok.',
+            'nama_lengkap' => ['required', 'string', 'max:255'],
+            'nik' => [
+                'required',
+                'string',
+                'size:16',
+                Rule::unique('perorangans', 'nik')->ignore($id_perorangan, 'id_perorangan'),
+            ],
+            'no_telepon' => [
+                'required',
+                'string',
+                'regex:/^[0-9]{9,14}$/',
+                Rule::unique('perorangans', 'no_telepon')->ignore($id_perorangan, 'id_perorangan'),
+            ],
+            'alamat' => ['required', 'string'],
+            'email' => [
+                'nullable',
+                'email',
+                Rule::unique('akuns', 'email')->ignore($this->route('id'), 'id_perorangan'),
+            ],
+            'password' => ['nullable', 'string', 'min:8'],
+            'nama_perusahaan' => ['nullable', 'string', 'max:255'],
+            'alamat_perusahaan' => ['nullable', 'string', 'required_with:nama_perusahaan'],
+            'email_perusahaan' => [
+                'nullable',
+                'email',
+                Rule::unique('perusahaans', 'email_perusahaan')->ignore($this->route('id'), 'id_perusahaan'),
+                'required_with:nama_perusahaan',
+            ],
         ];
     }
 }

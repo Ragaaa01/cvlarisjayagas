@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Http\Controllers\Controller;
 use App\Models\Akun;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 
@@ -115,7 +116,7 @@ public function register(Request $request)
             'message' => 'User tidak terautentikasi',
         ], 401);
     } catch (\Exception $e) {
-        \Log::error('Logout error', ['error' => $e->getMessage()]);
+        Log::error('Logout error', ['error' => $e->getMessage()]);
         return response()->json([
             'success' => false,
             'message' => 'Gagal logout: ' . $e->getMessage(),

@@ -9,30 +9,45 @@ class StoreApiPelangganRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true; // Sesuaikan dengan middleware autentikasi jika perlu
+        return auth()->user()->role === 'administrator';
     }
 
     public function rules(): array
     {
         return [
             'nama_lengkap' => ['required', 'string', 'max:255'],
-            'nik' => ['required', 'string', 'size:16', 'unique:perorangans,nik'],
-            'no_telepon' => ['required', 'string', 'max:15', 'unique:perorangans,no_telepon'],
+            'nik' => [
+                'required',
+                'string',
+                'size:16',
+                Rule::unique('perorangans', 'nik')->where(function ($query) {
+                    $query->whereNull('deleted_at');
+                    // Jika request tidak menyertakan nama_perusahaan, izinkan nik yang sebelumnya digunakan untuk perusahaan
+                    if (!$this->filled('nama_perusahaan')) {
+                        $query->whereNotNull('id_perusahaan');
+                    }
+                    return $query;
+                }),
+            ],
+            'no_telepon' => [
+                'required',
+                'string',
+                'regex:/^[0-9]{9,14}$/',
+                Rule::unique('perorangans', 'no_telepon')->where(function ($query) {
+                    $query->whereNull('deleted_at');
+                    // Jika request tidak menyertakan nama_perusahaan, izinkan no_telepon yang sebelumnya digunakan untuk perusahaan
+                    if (!$this->filled('nama_perusahaan')) {
+                        $query->whereNotNull('id_perusahaan');
+                    }
+                    return $query;
+                }),
+            ],
             'alamat' => ['required', 'string'],
-            'id_perusahaan' => ['nullable', 'exists:perusahaans,id_perusahaan'],
-            'email' => ['required', 'email', 'unique:akuns,email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'is_authenticated' => ['required', 'boolean'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'nik.unique' => 'NIK sudah terdaftar.',
-            'no_telepon.unique' => 'Nomor telepon sudah terdaftar.',
-            'email.unique' => 'Email sudah terdaftar.',
-            'password.confirmed' => 'Konfirmasi password tidak cocok.',
+            'email' => ['nullable', 'email', 'unique:akuns,email'],
+            'password' => ['nullable', 'string', 'min:8', 'required_with:email'],
+            'nama_perusahaan' => ['nullable', 'string', 'max:255'],
+            'alamat_perusahaan' => ['nullable', 'string', 'required_with:nama_perusahaan'],
+            'email_perusahaan' => ['nullable', 'email', 'unique:perusahaans,email_perusahaan', 'required_with:nama_perusahaan'],
         ];
     }
 }

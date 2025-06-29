@@ -7,6 +7,7 @@ use App\Models\StatusTabung;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ApiStatusTabungController extends Controller
 {
@@ -25,7 +26,7 @@ class ApiStatusTabungController extends Controller
                 'data' => $statusTabung,
             ], 200);
         } catch (\Exception $e) {
-            \Log::error('Gagal mengambil status tabung', [
+            Log::error('Gagal mengambil status tabung', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
