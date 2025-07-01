@@ -11,8 +11,17 @@ class DetailTransaksi extends Model
     protected $primaryKey = 'id_detail_transaksi';
 
     protected $fillable = [
-    'id_transaksi', 'id_tabung', 'id_jenis_transaksi', 'harga', 'batas_waktu_peminjaman'
-];
+        'id_transaksi',
+        'id_tabung',
+        'id_jenis_transaksi',
+        'harga',
+        'batas_waktu_peminjaman'
+    ];
+
+    protected $casts = [
+        'batas_waktu_peminjaman' => 'datetime', // Konversi otomatis ke Carbon
+        'harga' => 'decimal:2',
+    ];
 
     public function transaksi()
     {
@@ -21,16 +30,16 @@ class DetailTransaksi extends Model
 
     public function tabung()
     {
-        return $this->belongsTo(Tabung::class, 'id_tabung');
+        return $this->belongsTo(Tabung::class, 'id_tabung', 'id_tabung');
     }
 
     public function jenisTransaksi()
     {
-        return $this->belongsTo(JenisTransaksi::class, 'id_jenis_transaksi');
+        return $this->belongsTo(JenisTransaksi::class, 'id_jenis_transaksi', 'id_jenis_transaksi');
     }
 
     public function peminjaman()
     {
-        return $this->hasOne(Peminjaman::class, 'id_detail_transaksi');
+        return $this->hasOne(Peminjaman::class, 'id_detail_transaksi', 'id_detail_transaksi');
     }
 }

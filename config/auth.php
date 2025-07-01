@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\Akun;
+
+
 return [
 
     /*
@@ -43,7 +46,7 @@ return [
         'web' => [
             'driver' => 'session',
             'provider' => 'akuns',
-        ],  
+        ],
     ],
 
     /*
@@ -66,8 +69,9 @@ return [
     'providers' => [
         'akuns' => [
             'driver' => 'eloquent',
-            'model' => App\Models\Akun::class,
+            'model' => Akun::class,
         ],
+
 
         // 'users' => [
         //     'driver' => 'database',

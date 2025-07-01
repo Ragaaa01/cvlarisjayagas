@@ -2,14 +2,19 @@
 
 namespace App\Models;
 
+use App\Models\Perorangan;
+use App\Models\RiwayatTransaksi;
+use App\Models\Transaksi;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+
 class Akun extends Authenticatable // Extend Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     protected $table = 'akuns';
     protected $primaryKey = 'id_akun';
@@ -23,7 +28,7 @@ class Akun extends Authenticatable // Extend Authenticatable
 
     public function perorangan()
     {
-        return $this->belongsTo(Perorangan::class, 'id_perorangan');
+        return $this->belongsTo(Perorangan::class, 'id_perorangan', 'id_perorangan');
     }
 
     public function transaksis()

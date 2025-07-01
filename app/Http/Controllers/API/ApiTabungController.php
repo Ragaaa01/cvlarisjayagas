@@ -3,14 +3,16 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ApiTabungResource;
 use App\Models\Peminjaman;
 use App\Models\Tabung;
-use App\Models\JenisTabung;
-use App\Models\StatusTabung;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class ApiTabungController extends Controller
 {
@@ -68,39 +70,60 @@ class ApiTabungController extends Controller
         }
     }
 
-    public function showByKode(Request $request)
+    /**
+     * Menampilkan data tabung spesifik berdasarkan kode_tabung.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function showByKode(Request $request): JsonResponse
     {
         try {
-            $kodeTabung = $request->query('kode_tabung');
-            if (!$kodeTabung) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Kode tabung diperlukan',
-                    'data' => null,
-                ], 400);
-            }
+            // 1. Validasi bahwa parameter 'kode_tabung' ada.
+            $validated = $request->validate([
+                'kode_tabung' => 'required|string',
+            ]);
 
+            // Ambil kode yang sudah divalidasi dan dibersihkan dari spasi.
+            $kodeTabung = trim($validated['kode_tabung']);
+
+            Log::info('Mencari tabung dengan kode: \'' . $kodeTabung . '\'');
+
+            // 2. Gunakan query 'where' standar. Ini lebih bersih dan efisien.
+            //    Secara default, ini case-insensitive di sebagian besar setup MySQL.
             $tabung = Tabung::with(['jenisTabung', 'statusTabung'])
                 ->where('kode_tabung', $kodeTabung)
                 ->first();
 
+            // 3. Periksa apakah tabung ditemukan.
             if (!$tabung) {
+                Log::warning('Tabung tidak ditemukan untuk kode: ' . $kodeTabung);
                 return response()->json([
                     'success' => false,
-                    'message' => 'Tabung tidak ditemukan',
+                    'message' => 'Kode tabung tidak ditemukan',
                     'data' => null,
                 ], 404);
             }
 
+            Log::info('Tabung ditemukan: ' . json_encode($tabung));
             return response()->json([
                 'success' => true,
                 'message' => 'Data tabung berhasil diambil',
-                'data' => $tabung,
+                'data' => new ApiTabungResource($tabung),
             ], 200);
-        } catch (\Exception $e) {
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Tangani error validasi
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal mengambil data tabung: ' . $e->getMessage(),
+                'message' => 'Validasi gagal: ' . $e->getMessage(),
+                'data' => null
+            ], 422);
+        } catch (\Exception $e) {
+            // Tangani error lainnya
+            Log::error('Error saat mengambil data tabung berdasarkan kode: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data tabung: Terjadi kesalahan pada server.',
                 'data' => null,
             ], 500);
         }
@@ -112,7 +135,12 @@ class ApiTabungController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'kode_tabung' => 'required|string|max:20|unique:tabungs,kode_tabung',
+            'kode_tabung' => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('tabungs', 'kode_tabung')->whereNull('deleted_at'),
+            ],
             'id_jenis_tabung' => 'required|integer|exists:jenis_tabungs,id_jenis_tabung',
             'id_status_tabung' => 'required|integer|exists:status_tabungs,id_status_tabung',
         ]);
@@ -164,7 +192,12 @@ class ApiTabungController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'kode_tabung' => 'required|string|max:20|unique:tabungs,kode_tabung,' . $id . ',id_tabung',
+            'kode_tabung' => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('tabungs', 'kode_tabung')->ignore($id, 'id_tabung')->whereNull('deleted_at'),
+            ],
             'id_jenis_tabung' => 'required|integer|exists:jenis_tabungs,id_jenis_tabung',
             'id_status_tabung' => 'required|integer|exists:status_tabungs,id_status_tabung',
         ]);
@@ -205,7 +238,7 @@ class ApiTabungController extends Controller
      */
     public function destroy($id)
     {
-        $tabung = Tabung::find($id);
+        $tabung = Tabung::findOrFail($id);
         if (!$tabung) {
             return response()->json([
                 'success' => false,
@@ -247,13 +280,21 @@ class ApiTabungController extends Controller
                     return [
                         'id_tabung' => $tabung->id_tabung,
                         'kode_tabung' => $tabung->kode_tabung,
-                        'nama_jenis' => $tabung->jenisTabung->nama_jenis,
-                        'harga' => $tabung->jenisTabung->harga,
+                        'jenis_tabung' => [
+                            'id_jenis_tabung' => $tabung->jenisTabung->id_jenis_tabung,
+                            'kode_jenis' => $tabung->jenisTabung->kode_jenis,
+                            'nama_jenis' => $tabung->jenisTabung->nama_jenis,
+                            'harga' => $tabung->jenisTabung->harga,
+                        ],
+                        'status_tabung' => [
+                            'id_status_tabung' => $tabung->statusTabung->id_status_tabung,
+                            'status_tabung' => $tabung->statusTabung->status_tabung,
+                        ],
                     ];
                 }),
             ], 200);
-        } catch (Exception $e) {
-            \Log::error('Gagal mengambil tabung tersedia', [
+        } catch (\Exception $e) {
+            Log::error('Gagal mengambil tabung tersedia', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
@@ -302,7 +343,7 @@ class ApiTabungController extends Controller
                 })->toArray(),
             ], 200);
         } catch (\Exception $e) {
-            \Log::error('Gagal mengambil tabung aktif', [
+            Log::error('Gagal mengambil tabung aktif', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);

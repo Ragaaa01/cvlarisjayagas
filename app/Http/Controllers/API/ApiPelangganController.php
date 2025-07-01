@@ -5,33 +5,24 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreApiPelangganRequest;
 use App\Http\Requests\UpdateApiPelangganRequest;
+use App\Http\Resources\ApiPelangganCollection;
+use App\Http\Resources\ApiPelangganResource;
 use App\Models\Akun;
 use App\Models\Perorangan;
+use App\Models\Perusahaan;
+use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class ApiPelangganController extends Controller
 {
     // public function __construct()
     // {
-    //     $this->middleware('auth:sanctum');
-    //     $this->middleware(function ($request, $next) {
-    //         if (Auth::user()->role !== 'pelanggan') {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'Akses hanya untuk pelanggan'
-    //             ], 403);
-    //         }
-    //         return $next($request);
-    //     });
+    //     $this->middleware('auth:api')->except(['index', 'show', 'createOrGetPerusahaan']);
     // }
-
-    public function __construct()
-    {
-        $this->middleware('auth:api')->except(['index', 'show']);
-    }
 
     public function profile(): JsonResponse
     {
@@ -47,157 +38,207 @@ class ApiPelangganController extends Controller
                 'no_telepon' => $user->perorangan->no_telepon ?? null,
                 'alamat' => $user->perorangan->alamat ?? null,
                 'nama_perusahaan' => $user->perorangan->perusahaan->nama_perusahaan ?? null,
+                'email_perusahaan' => $user->perorangan->perusahaan->email_perusahaan ?? null,
                 'alamat_perusahaan' => $user->perorangan->perusahaan->alamat_perusahaan ?? null,
             ];
 
             return response()->json([
-                'success' => true,
+                'status' => true,
+                'message' => 'Profil berhasil diambil',
                 'data' => $data,
             ], 200);
         } catch (\Exception $e) {
-            \Log::error('Gagal mengambil profil pelanggan', [
+            Log::error('Gagal mengambil profil pelanggan', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
 
             return response()->json([
-                'success' => false,
+                'status' => false,
                 'message' => 'Gagal mengambil profil: ' . $e->getMessage(),
             ], 500);
         }
     }
 
-    public function index(): JsonResponse
-    {
-        $pelanggans = Perorangan::with(['akun', 'perusahaan'])
-            ->whereHas('akun', function ($query) {
-                $query->where('role', 'pelanggan');
-            })
-            ->get();
-
-        return response()->json([
-            'status' => true,
-            'message' => 'success',
-            'data' => $pelanggans
-        ]);
-    }
-
-    public function store(StoreApiPelangganRequest $request): JsonResponse
+    public function index()
     {
         try {
-            DB::beginTransaction();
-
-            // Buat data perorangan
-            $perorangan = Perorangan::create([
-                'nama_lengkap' => $request->nama_lengkap,
-                'nik' => $request->nik,
-                'no_telepon' => $request->no_telepon,
-                'alamat' => $request->alamat,
-                'id_perusahaan' => $request->id_perusahaan,
-            ]);
-
-            // Buat akun jika is_authenticated true
-            if ($request->is_authenticated) {
-                Akun::create([
-                    'id_perorangan' => $perorangan->id_perorangan,
-                    'email' => $request->email,
-                    'password' => Hash::make($request->password),
-                    'role' => 'pelanggan',
-                    'status_aktif' => true,
-                ]);
-            }
-
-            DB::commit();
+            $pelanggans = Perorangan::with(['akun', 'perusahaan'])
+                ->whereNull('deleted_at')
+                ->get();
 
             return response()->json([
                 'status' => true,
-                'message' => 'Pelanggan berhasil ditambahkan.',
-                'data' => $perorangan->load(['akun', 'perusahaan']),
-            ], 201);
+                'message' => 'Daftar pelanggan berhasil diambil',
+                'data' => new ApiPelangganCollection($pelanggans),
+            ], 200);
         } catch (\Exception $e) {
-            DB::rollback();
+            Log::error('Gagal mengambil daftar pelanggan', ['error' => $e->getMessage()]);
             return response()->json([
                 'status' => false,
-                'message' => 'Gagal menambahkan pelanggan: ' . $e->getMessage(),
+                'message' => 'Gagal mengambil daftar pelanggan: ' . $e->getMessage(),
+                'data' => null,
             ], 500);
         }
     }
 
     public function show($id): JsonResponse
     {
-        $perorangan = Perorangan::with(['akun', 'perusahaan'])->findOrFail($id);
+        try {
+            $perorangan = Perorangan::with(['akun', 'perusahaan'])->whereNull('deleted_at')->find($id);
+            if (!$perorangan) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Pelanggan tidak ditemukan',
+                ], 404);
+            }
 
-        return response()->json([
-            'status' => true,
-            'message' => 'success',
-            'data' => $perorangan
-        ]);
+            return response()->json([
+                'status' => true,
+                'message' => 'Detail pelanggan berhasil diambil',
+                'data' => $perorangan,
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Gagal mengambil detail pelanggan', ['error' => $e->getMessage(), 'id' => $id]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal mengambil detail pelanggan: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function store(StoreApiPelangganRequest $request): JsonResponse
+    {
+        try {
+            $result = DB::transaction(function () use ($request) {
+                $perusahaan = null;
+                if ($request->nama_perusahaan) {
+                    $perusahaan = Perusahaan::create([
+                        'nama_perusahaan' => $request->nama_perusahaan,
+                        'alamat_perusahaan' => $request->alamat_perusahaan,
+                        'email_perusahaan' => $request->email_perusahaan,
+                    ]);
+                }
+
+                $perorangan = Perorangan::create([
+                    'nama_lengkap' => $request->nama_lengkap,
+                    'nik' => $request->nik,
+                    'no_telepon' => $request->no_telepon,
+                    'alamat' => $request->alamat,
+                    'id_perusahaan' => $perusahaan?->id_perusahaan,
+                ]);
+
+                if ($request->email) {
+                    Akun::create([
+                        'id_perorangan' => $perorangan->id_perorangan,
+                        'email' => $request->email,
+                        'password' => bcrypt($request->password),
+                        'role' => 'pelanggan',
+                        'status_aktif' => true,
+                    ]);
+                }
+
+                return $perorangan->load(['akun', 'perusahaan']);
+            });
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Pelanggan berhasil ditambahkan',
+                'data' => new ApiPelangganResource($result),
+            ], 201);
+        } catch (\Exception $e) {
+            \Log::error('Gagal menambah pelanggan', ['error' => $e->getMessage(), 'request' => $request->all()]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal menambah pelanggan: ' . $e->getMessage(),
+                'data' => null,
+            ], 500);
+        }
     }
 
     public function update(UpdateApiPelangganRequest $request, $id): JsonResponse
     {
         try {
-            DB::beginTransaction();
+            $result = DB::transaction(function () use ($request, $id) {
+                $perorangan = Perorangan::with(['akun', 'perusahaan'])->findOrFail($id);
 
-            $perorangan = Perorangan::findOrFail($id);
-
-            // Update data perorangan
-            $perorangan->update([
-                'nama_lengkap' => $request->nama_lengkap ?? $perorangan->nama_lengkap,
-                'nik' => $request->nik ?? $perorangan->nik,
-                'no_telepon' => $request->no_telepon ?? $perorangan->no_telepon,
-                'alamat' => $request->alamat ?? $perorangan->alamat,
-                'id_perusahaan' => $request->id_perusahaan ?? $perorangan->id_perusahaan,
-            ]);
-
-            // Update atau buat akun
-            if ($request->has('email') || $request->has('password') || $request->has('status_aktif')) {
-                $akun = $perorangan->akun ?? new Akun(['id_perorangan' => $perorangan->id_perorangan]);
-                $akun->email = $request->email ?? $akun->email;
-                if ($request->has('password') && $request->password) {
-                    $akun->password = Hash::make($request->password);
+                // Update Perusahaan
+                $perusahaan = $perorangan->perusahaan;
+                if ($request->nama_perusahaan) {
+                    if ($perusahaan) {
+                        $perusahaan->update([
+                            'nama_perusahaan' => $request->nama_perusahaan,
+                            'alamat_perusahaan' => $request->alamat_perusahaan,
+                            'email_perusahaan' => $request->email_perusahaan,
+                        ]);
+                    } else {
+                        $perusahaan = Perusahaan::create([
+                            'nama_perusahaan' => $request->nama_perusahaan,
+                            'alamat_perusahaan' => $request->alamat_perusahaan,
+                            'email_perusahaan' => $request->email_perusahaan,
+                        ]);
+                    }
+                } elseif ($perusahaan) {
+                    $perusahaan->delete();
+                    $perusahaan = null;
                 }
-                $akun->status_aktif = $request->status_aktif ?? $akun->status_aktif ?? true;
-                $akun->role = 'pelanggan';
-                $akun->save();
-            }
 
-            DB::commit();
+                // Update Perorangan
+                $perorangan->update([
+                    'nama_lengkap' => $request->nama_lengkap,
+                    'nik' => $request->nik,
+                    'no_telepon' => $request->no_telepon,
+                    'alamat' => $request->alamat,
+                    'id_perusahaan' => $perusahaan?->id_perusahaan,
+                ]);
+
+                // Update Akun
+                if ($request->email) {
+                    if ($perorangan->akun) {
+                        $perorangan->akun->update([
+                            'email' => $request->email,
+                            'password' => $request->password ? bcrypt($request->password) : $perorangan->akun->password,
+                        ]);
+                    } else {
+                        Akun::create([
+                            'id_perorangan' => $perorangan->id_perorangan,
+                            'email' => $request->email,
+                            'password' => bcrypt($request->password),
+                            'role' => 'pelanggan',
+                            'status_aktif' => true,
+                        ]);
+                    }
+                } elseif ($perorangan->akun) {
+                    $perorangan->akun->delete();
+                }
+
+                return $perorangan->load(['akun', 'perusahaan']);
+            });
 
             return response()->json([
                 'status' => true,
-                'message' => 'Pelanggan berhasil diperbarui.',
-                'data' => $perorangan->load(['akun', 'perusahaan']),
-            ]);
+                'message' => 'Pelanggan berhasil diperbarui',
+                'data' => new ApiPelangganResource($result),
+            ], 200);
         } catch (\Exception $e) {
-            DB::rollback();
+            \Log::error('Gagal memperbarui pelanggan', [
+                'error' => $e->getMessage(),
+                'customer_id' => $id,
+                'request' => $request->all(),
+            ]);
             return response()->json([
                 'status' => false,
                 'message' => 'Gagal memperbarui pelanggan: ' . $e->getMessage(),
+                'data' => null,
             ], 500);
         }
     }
 
-    public function destroy($id): JsonResponse
-    {
-        try {
-            DB::beginTransaction();
+    public function destroy($id) {
+        $perorangan = Perorangan::findOrFail($id);
+        $perorangan->delete();
 
-            $perorangan = Perorangan::findOrFail($id);
-            $perorangan->delete(); // Akun akan dihapus otomatis karena onDelete('cascade')
-
-            DB::commit();
-
-            return response()->json([
-                'status' => true,
-                'message' => 'Pelanggan berhasil dihapus.',
-            ]);
-        } catch (\Exception $e) {
-            DB::rollback();
-            return response()->json([
-                'status' => false,
-                'message' => 'Gagal menghapus pelanggan: ' . $e->getMessage(),
-            ], 500);
-        }
+        return response()->json(['message' => 'Pelanggan berhasil dihapus']);
     }
 }

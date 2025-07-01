@@ -2,11 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Akun;
+use App\Models\Perusahaan;
+use App\Models\RiwayatTransaksi;
+use App\Models\Transaksi;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Perorangan extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'perorangans';
      protected $primaryKey = 'id_perorangan';
 
@@ -14,7 +21,7 @@ class Perorangan extends Model
 
     public function akun()
     {
-        return $this->hasOne(Akun::class, 'id_perorangan');
+        return $this->hasOne(Akun::class, 'id_perorangan', 'id_perorangan');
     }
 
     public function perusahaan()

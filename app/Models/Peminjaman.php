@@ -12,9 +12,13 @@ class Peminjaman extends Model
 
     protected $fillable = ['id_detail_transaksi', 'tanggal_pinjam', 'status_pinjam'];
 
+    protected $casts = [
+        'tanggal_pinjam' => 'datetime', // Konversi otomatis ke Carbon
+    ];
+
     public function detailTransaksi()
     {
-        return $this->belongsTo(DetailTransaksi::class, 'id_detail_transaksi');
+        return $this->belongsTo(DetailTransaksi::class, 'id_detail_transaksi', 'id_detail_transaksi');
     }
 
     public function pengembalian()

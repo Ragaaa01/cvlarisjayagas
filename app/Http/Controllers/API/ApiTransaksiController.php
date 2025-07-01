@@ -3,408 +3,382 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\Transaksi;
+use App\Http\Requests\BayarTagihanRequest;
+use App\Http\Requests\StoreApiTransaksiRequest;
+use App\Http\Requests\UpdateApiTransaksiRequest;
+use App\Http\Resources\ApiTabungResource;
+use App\Http\Resources\ApiTransaksiResource;
 use App\Models\DetailTransaksi;
-use App\Models\Tabung;
-use App\Models\StatusTransaksi;
-use App\Models\Tagihan;
 use App\Models\Peminjaman;
-use App\Models\JenisTabung;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Perorangan;
+use App\Models\StatusTabung;
+use App\Models\StatusTransaksi;
+use App\Models\Tabung;
+use App\Models\Tagihan;
+use App\Models\Transaksi;
+use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
+/**
+ * Controller untuk mengelola transaksi (peminjaman/isi ulang tabung).
+ */
 class ApiTransaksiController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth:sanctum');
-        $this->middleware(function ($request, $next) {
-            if (Auth::user()->role !== 'pelanggan') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Akses hanya untuk pelanggan'
-                ], 403);
-            }
-            return $next($request);
-        });
-    }
-
-    // Definisikan konstanta untuk status tagihan dan transaksi
-    const STATUS_TAGIHAN_LUNAS = 'lunas';
-    const STATUS_TAGIHAN_BELUM_LUNAS = 'belum_lunas';
-    const STATUS_TRANSAKSI_SUCCESS = 2; // id_status_transaksi untuk success
-    const STATUS_TRANSAKSI_PENDING = 1; // id_status_transaksi untuk pending
-    const STATUS_TRANSAKSI_FAILED = 3;  // id_status_transaksi untuk failed
-
     /**
-     * Create peminjaman transaksi.
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * Tampilkan daftar transaksi (untuk admin).
+     *
+     * @return JsonResponse
      */
-    public function createPeminjaman(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'items' => 'required|array',
-            'items.*.id_jenis_tabung' => 'required|exists:jenis_tabungs,id_jenis_tabung',
-            'items.*.jumlah' => 'required|integer|min:1',
-            'metode_pembayaran' => 'required|in:tunai,transfer',
-            'jumlah_dibayar' => 'required|numeric|min:0',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        return $this->processTransaksi($request, 'peminjaman');
-    }
-
-    /**
-     * Create isi ulang transaksi.
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function createIsiUlang(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'items' => 'required|array',
-            'items.*.id_jenis_tabung' => 'required|exists:jenis_tabungs,id_jenis_tabung',
-            'items.*.jumlah' => 'required|integer|min:1',
-            'metode_pembayaran' => 'required|in:tunai,transfer',
-            'jumlah_dibayar' => 'required|numeric|min:0',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        return $this->processTransaksi($request, 'isi ulang');
-    }
-
-    /**
-     * Create combined peminjaman and isi ulang transaksi.
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function createGabungan(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'items' => 'required|array',
-            'items.*.id_jenis_tabung' => 'required|exists:jenis_tabungs,id_jenis_tabung',
-            'items.*.jumlah' => 'required|integer|min:1',
-            'items.*.jenis_transaksi' => 'required|in:peminjaman,isi ulang',
-            'metode_pembayaran' => 'required|in:tunai,transfer',
-            'jumlah_dibayar' => 'required|numeric|min:0',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        return $this->processTransaksi($request, 'gabungan');
-    }
-
-    /**
-     * Process transaksi (peminjaman, isi ulang, or gabungan).
-     * @param Request $request
-     * @param string $type
-     * @return \Illuminate\Http\JsonResponse
-     */
-    private function processTransaksi(Request $request, $type)
+    public function index(): JsonResponse
     {
         try {
-            return DB::transaction(function () use ($request, $type) {
-                $user = Auth::user();
-                $items = $request->items;
-                $total_transaksi = 0;
-                $allocated_tubes = [];
-
-                // Validasi ketersediaan tabung berdasarkan jenis tabung
-                foreach ($items as $item) {
-                    $jumlah = $item['jumlah'];
-                    $available_tubes = Tabung::where('id_jenis_tabung', $item['id_jenis_tabung'])
-                        ->where('id_status_tabung', 1) // Tersedia
-                        ->count();
-
-                    if ($available_tubes < $jumlah) {
-                        $jenis_tabung = JenisTabung::find($item['id_jenis_tabung'])->nama_jenis;
-                        throw new \Exception("Jumlah tabung {$jenis_tabung} yang tersedia ($available_tubes) kurang dari yang diminta ($jumlah)");
-                    }
-                }
-
-                // Buat transaksi
-                $transaksi = Transaksi::create([
-                    'id_akun' => $user->id_akun,
-                    'id_perorangan' => $user->id_perorangan,
-                    'tanggal_transaksi' => Carbon::now(),
-                    'waktu_transaksi' => Carbon::now()->toTimeString(),
-                    'jumlah_dibayar' => $request->jumlah_dibayar,
-                    'metode_pembayaran' => $request->metode_pembayaran,
-                    'id_status_transaksi' => self::STATUS_TRANSAKSI_PENDING,
-                    'tanggal_jatuh_tempo' => $type === 'isi ulang' ? null : Carbon::now()->addDays(30),
-                ]);
-
-                Log::info('Transaksi dibuat', ['id_transaksi' => $transaksi->id_transaksi]);
-
-                // Proses item transaksi dan alokasi tabung
-                foreach ($items as $item) {
-                    $jumlah = $item['jumlah'];
-                    $jenis_tabung = JenisTabung::find($item['id_jenis_tabung']);
-                    $harga = $jenis_tabung->harga;
-
-                    // Ambil tabung yang tersedia untuk jenis ini
-                    $tubes = Tabung::where('id_jenis_tabung', $item['id_jenis_tabung'])
-                        ->where('id_status_tabung', 1)
-                        ->take($jumlah)
-                        ->get();
-
-                    foreach ($tubes as $tube) {
-                        $total_item = $harga;
-                        $jenis_transaksi_id = $type === 'gabungan' ?
-                            ($item['jenis_transaksi'] === 'peminjaman' ? 1 : 2) :
-                            ($type === 'peminjaman' ? 1 : 2);
-
-                        // Buat detail transaksi
-                        $detail = DetailTransaksi::create([
-                            'id_transaksi' => $transaksi->id_transaksi,
-                            'id_tabung' => $tube->id_tabung,
-                            'id_jenis_transaksi' => $jenis_transaksi_id,
-                            'harga' => $harga,
-                            'total_transaksi' => $total_item,
-                            'batas_waktu_peminjaman' => $type === 'isi ulang' ? null : Carbon::now()->addDays(30),
-                        ]);
-
-                        $total_transaksi += $total_item;
-
-                        // Update status tabung untuk peminjaman
-                        if ($type === 'peminjaman' || ($type === 'gabungan' && $item['jenis_transaksi'] === 'peminjaman')) {
-                            $tube->update(['id_status_tabung' => 2]); // Dipinjam
-                            Peminjaman::create([
-                                'id_detail_transaksi' => $detail->id_detail_transaksi,
-                                'tanggal_pinjam' => Carbon::now(),
-                                'status_pinjam' => 'aktif',
-                            ]);
-                        }
-
-                        // Simpan tabung yang dialokasikan untuk respons
-                        $allocated_tubes[] = [
-                            'id_tabung' => $tube->id_tabung,
-                            'kode_tabung' => $tube->kode_tabung,
-                            'nama_jenis' => $jenis_tabung->nama_jenis,
-                            'harga' => $harga,
-                            'total_transaksi' => $total_item,
-                            'jenis_transaksi' => $jenis_transaksi_id === 1 ? 'peminjaman' : 'isi ulang',
-                        ];
-                    }
-                }
-
-                // Log data tagihan sebelum dibuat
-                $tagihan_data = [
-                    'id_transaksi' => $transaksi->id_transaksi,
-                    'jumlah_dibayar' => $request->jumlah_dibayar,
-                    'sisa' => $total_transaksi - $request->jumlah_dibayar,
-                    'status' => $request->jumlah_dibayar >= $total_transaksi ? self::STATUS_TAGIHAN_LUNAS : self::STATUS_TAGIHAN_BELUM_LUNAS,
-                    'periode_ke' => 1,
-                    'hari_keterlambatan' => 0,
-                ];
-                Log::info('Membuat tagihan', $tagihan_data);
-
-                // Buat tagihan
-                $tagihan = Tagihan::create($tagihan_data);
-
-                if (!$tagihan) {
-                    Log::error('Gagal membuat tagihan', ['id_transaksi' => $transaksi->id_transaksi]);
-                    throw new \Exception('Gagal membuat tagihan');
-                }
-
-                // Tentukan status transaksi berdasarkan status tagihan
-                $status_transaksi = $tagihan->status === self::STATUS_TAGIHAN_LUNAS ?
-                    self::STATUS_TRANSAKSI_SUCCESS :
-                    self::STATUS_TRANSAKSI_PENDING;
-
-                // Update status transaksi
-                $transaksi->update([
-                    'id_status_transaksi' => $status_transaksi,
-                ]);
-
-                Log::info('Transaksi diperbarui', ['id_transaksi' => $transaksi->id_transaksi, 'status' => $status_transaksi]);
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Transaksi berhasil dibuat',
-                    'data' => [
-                        'transaksi' => [
-                            'id_transaksi' => $transaksi->id_transaksi,
-                            'tanggal_transaksi' => $transaksi->tanggal_transaksi,
-                            'jumlah_dibayar' => $transaksi->jumlah_dibayar,
-                            'metode_pembayaran' => $transaksi->metode_pembayaran,
-                            'status' => $transaksi->statusTransaksi->status,
-                            'tanggal_jatuh_tempo' => $transaksi->tanggal_jatuh_tempo,
-                            'items' => $allocated_tubes,
-                        ],
-                        'tagihan' => [
-                            'id_tagihan' => $tagihan->id_tagihan,
-                            'jumlah_dibayar' => $tagihan->jumlah_dibayar,
-                            'sisa' => $tagihan->sisa,
-                            'status' => $tagihan->status,
-                            'periode_ke' => $tagihan->periode_ke,
-                            'hari_keterlambatan' => $tagihan->hari_keterlambatan,
-                        ]
-                    ]
-                ], 201);
-            });
-        } catch (\Exception $e) {
-            Log::error('Gagal memproses transaksi', [
-                'error' => $e->getMessage(),
-                'request' => $request->all(),
-            ]);
-
-            // Jika transaksi sudah dibuat, tandai sebagai failed
-            if (isset($transaksi)) {
-                $transaksi->update([
-                    'id_status_transaksi' => self::STATUS_TRANSAKSI_FAILED,
-                ]);
-            }
+            $transaksis = Transaksi::with(['detailTransaksis.tabung.jenisTabung', 'tagihan', 'statusTransaksi', 'akun.perorangan',])
+                ->latest()
+                ->get(); // Tambahkan get() untuk mengeksekusi query
 
             return response()->json([
+                'success' => true,
+                'message' => 'Daftar transaksi berhasil diambil',
+                'data' => ApiTransaksiResource::collection($transaksis),
+            ], 200);
+        } catch (Exception $e) {
+            Log::error('Gagal mengambil transaksi: ' . $e->getMessage());
+            return response()->json([
                 'success' => false,
-                'message' => 'Gagal memproses transaksi: ' . $e->getMessage(),
+                'message' => 'Gagal mengambil transaksi: ' . $e->getMessage(),
+                'data' => null,
             ], 500);
         }
     }
 
     /**
-     * Get riwayat transaksi pelanggan.
-     * @return \Illuminate\Http\JsonResponse
+     * Simpan transaksi baru beserta detail, peminjaman, dan tagihan.
+     *
+     * @param StoreApiTransaksiRequest $request
+     * @return JsonResponse
      */
-    public function getRiwayatTransaksi()
+    public function store(StoreApiTransaksiRequest $request): JsonResponse
     {
-        $user = Auth::user();
-        $transaksis = Transaksi::with(['detailTransaksis.tabung.jenisTabung', 'statusTransaksi', 'tagihan'])
-            ->where('id_akun', $user->id_akun)
-            ->get();
+        try {
+            return DB::transaction(function () use ($request) {
+                // Handle pelanggan
+                $idAkun = $request['id_akun'];
+                $idPerorangan = $request['id_perorangan'] ?? null;
+                $idPerusahaan = $request['id_perusahaan'] ?? null;
 
-        return response()->json([
-            'success' => true,
-            'data' => $transaksis->map(function ($transaksi) {
-                return [
+                // if ($request['tipe_pelanggan'] === 'perorangan_tanpa_akun') {
+                //     // $pelanggan = $request['pelanggan'];
+                //     // $perorangan = Perorangan::create([
+                //     //     'nama_lengkap' => $pelanggan['nama_lengkap'],
+                //     //     'nik' => $pelanggan['nik'],
+                //     //     'no_telepon' => $pelanggan['no_telepon'],
+                //     //     'alamat' => $pelanggan['alamat'],
+                //     //     'id_perusahaan' => null,
+                //     // ]);
+                //     // $idPerorangan = $perorangan->id_perorangan;
+                // } elseif ($request['tipe_pelanggan'] === 'perorangan_dengan_akun') {
+                //     $idPerorangan = $request['id_perorangan'];
+                // } elseif ($request['tipe_pelanggan'] === 'perusahaan_dengan_akun') { // Perbaiki kondisi
+                //     $idPerorangan = $request['id_perorangan'];
+                //     $idPerusahaan = $request['id_perusahaan'];
+                // }
+
+                $detailTransaksis = $request['detail_transaksis'];
+                $idTabungs = array_column($detailTransaksis, 'id_tabung');
+
+                $tabungs = Tabung::with('jenisTabung', 'statusTabung')->whereIn('id_tabung', $idTabungs)->get()->keyBy('id_tabung');
+
+                // Validasi dan hitung total transaksi
+                $totalTransaksi = 0;
+                foreach ($detailTransaksis as $detail) {
+                    $tabung = $tabungs[$detail['id_tabung']] ?? null;
+
+                    if (!$tabung) {
+                        throw new Exception("Tabung dengan ID {$detail['id_tabung']} tidak ditemukan.");
+                    }
+                    if ($tabung->statusTabung->status_tabung !== 'tersedia') {
+                        throw new Exception("Tabung {$tabung->kode_tabung} tidak tersedia");
+                    }
+                    if ($detail['harga'] != $tabung->jenisTabung->harga) {
+                        throw new Exception("Harga tabung {$tabung->kode_tabung} tidak valid");
+                    }
+                    $totalTransaksi += $detail['harga'];
+                }
+
+                // Buat transaksi
+                $transaksi = Transaksi::create([
+                    'id_akun' => $idAkun,
+                    'id_perorangan' => $idPerorangan,
+                    'id_perusahaan' => $idPerusahaan,
+                    'tanggal_transaksi' => now()->toDateString(),
+                    'waktu_transaksi' => now()->toTimeString(),
+                    'total_transaksi' => $totalTransaksi,
+                    'jumlah_dibayar' => $request['jumlah_dibayar'],
+                    'metode_pembayaran' => $request['metode_pembayaran'],
+                    'id_status_transaksi' => StatusTransaksi::PENDING, // Pending
+                    'tanggal_jatuh_tempo' => in_array(1, array_column($request['detail_transaksis'], 'id_jenis_transaksi'))
+                        ? now()->addDays(30)->toDateString()
+                        : null,
+                ]);
+
+                // Simpan detail transaksi dan peminjaman
+                foreach ($detailTransaksis as $detail) {
+                    $tabung = $tabungs[$detail['id_tabung']];
+                    $detailTransaksi = DetailTransaksi::create([
+                        'id_transaksi' => $transaksi->id_transaksi,
+                        'id_tabung' => $detail['id_tabung'],
+                        'id_jenis_transaksi' => $detail['id_jenis_transaksi'],
+                        'harga' => $detail['harga'],
+                        'batas_waktu_peminjaman' => $detail['id_jenis_transaksi'] == 1
+                            ? now()->addDays(30)->toDateString()
+                            : null,
+                    ]);
+
+                    if ($detail['id_jenis_transaksi'] == 1) { // Peminjaman
+                        Peminjaman::create([
+                            'id_detail_transaksi' => $detailTransaksi->id_detail_transaksi,
+                            'tanggal_pinjam' => now()->toDateString(),
+                            'status_pinjam' => 'aktif',
+                        ]);
+                    }
+                }
+
+                Tabung::whereIn('id_tabung', $idTabungs)->update(['id_status_tabung' => StatusTabung::DIPINJAM]); // ID 2 = Dipinjam
+
+                // Buat tagihan
+                $sisa = $totalTransaksi - $request['jumlah_dibayar'];
+                Tagihan::create([
                     'id_transaksi' => $transaksi->id_transaksi,
-                    'tanggal_transaksi' => $transaksi->tanggal_transaksi,
-                    'jumlah_dibayar' => $transaksi->jumlah_dibayar,
-                    'metode_pembayaran' => $transaksi->metode_pembayaran,
-                    'status' => $transaksi->statusTransaksi->status,
-                    'tanggal_jatuh_tempo' => $transaksi->tanggal_jatuh_tempo,
-                    'items' => $transaksi->detailTransaksis->map(function ($detail) {
-                        return [
-                            'id_tabung' => $detail->tabung->id_tabung,
-                            'kode_tabung' => $detail->tabung->kode_tabung,
-                            'nama_jenis' => $detail->tabung->jenisTabung->nama_jenis,
-                            'harga' => $detail->harga,
-                            'total_transaksi' => $detail->total_transaksi,
-                            'jenis_transaksi' => $detail->jenisTransaksi->nama_jenis_transaksi,
-                        ];
-                    }),
-                    'tagihan' => [
-                        'id_tagihan' => $transaksi->tagihan->id_tagihan,
-                        'jumlah_dibayar' => $transaksi->tagihan->jumlah_dibayar,
-                        'sisa' => $transaksi->tagihan->sisa,
-                        'status' => $transaksi->tagihan->status,
-                        'periode_ke' => $transaksi->tagihan->periode_ke,
-                        'hari_keterlambatan' => $transaksi->tagihan->hari_keterlambatan,
-                    ]
-                ];
-            })
-        ], 200);
-    }
+                    'jumlah_dibayar' => $request['jumlah_dibayar'],
+                    'sisa' => $sisa,
+                    'status' => $sisa <= 0 ? 'lunas' : 'belum_lunas',
+                    'tanggal_bayar_tagihan' => $sisa <= 0 ? now()->toDateString() : null,
+                    'hari_keterlambatan' => 0,
+                    'periode_ke' => 1,
+                    'keterangan' => $request->keterangan ?? null,
+                ]);
 
-    /**
-     * Get available jenis tabung for selection.
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getAvailableJenisTabung()
-    {
-        $jenis_tabungs = JenisTabung::withCount(['tabungs' => function ($query) {
-            $query->where('id_status_tabung', 1); // Hanya hitung tabung yang tersedia
-        }])
-        ->having('tabungs_count', '>', 0)
-        ->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $jenis_tabungs->map(function ($jenis) {
-                return [
-                    'id_jenis_tabung' => $jenis->id_jenis_tabung,
-                    'nama_jenis' => $jenis->nama_jenis,
-                    'harga' => $jenis->harga,
-                    'jumlah_tersedia' => $jenis->tabungs_count,
-                ];
-            })
-        ], 200);
-    }
-
-    /**
-     * Get detail of a specific transaction.
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getTransaksiDetail($id)
-    {
-        $user = Auth::user();
-        $transaksi = Transaksi::with(['detailTransaksis.tabung.jenisTabung', 'statusTransaksi', 'tagihan'])
-            ->where('id_akun', $user->id_akun)
-            ->where('id_transaksi', $id)
-            ->first();
-
-        if (!$transaksi) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Transaksi berhasil dibuat',
+                    'data' => new ApiTransaksiResource($transaksi->load('detailTransaksis', 'tagihan')),
+                ], 201);
+            });
+        } catch (Exception $e) {
+            Log::error('Gagal membuat transaksi: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Transaksi tidak ditemukan atau tidak diizinkan',
+                'message' => 'Gagal membuat transaksi: ' . $e->getMessage(),
+                'data' => null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Tampilkan detail transaksi.
+     *
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function show($id): JsonResponse
+    {
+        try {
+            $transaksi = Transaksi::with(['detailTransaksis.tabung.jenisTabung', 'tagihan', 'statusTransaksi'])
+                ->findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Detail transaksi berhasil diambil',
+                'data' => new ApiTransaksiResource($transaksi),
+            ], 200);
+        } catch (Exception $e) {
+            Log::error('Gagal mengambil transaksi: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaksi tidak ditemukan',
+                'data' => null,
             ], 404);
         }
+    }
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'id_transaksi' => $transaksi->id_transaksi,
-                'tanggal_transaksi' => $transaksi->tanggal_transaksi,
-                'jumlah_dibayar' => $transaksi->jumlah_dibayar,
-                'metode_pembayaran' => $transaksi->metode_pembayaran,
-                'status' => $transaksi->statusTransaksi->status,
-                'tanggal_jatuh_tempo' => $transaksi->tanggal_jatuh_tempo,
-                'items' => $transaksi->detailTransaksis->map(function ($detail) {
-                    return [
-                        'id_tabung' => $detail->tabung->id_tabung,
-                        'kode_tabung' => $detail->tabung->kode_tabung,
-                        'nama_jenis' => $detail->tabung->jenisTabung->nama_jenis,
-                        'harga' => $detail->harga,
-                        'total_transaksi' => $detail->total_transaksi,
-                        'jenis_transaksi' => $detail->jenisTransaksi->nama_jenis_transaksi,
-                    ];
-                }),
-                'tagihan' => [
-                    'id_tagihan' => $transaksi->tagihan->id_tagihan,
-                    'jumlah_dibayar' => $transaksi->tagihan->jumlah_dibayar,
-                    'sisa' => $transaksi->tagihan->sisa,
-                    'status' => $transaksi->tagihan->status,
-                    'periode_ke' => $transaksi->tagihan->periode_ke,
-                    'hari_keterlambatan' => $transaksi->tagihan->hari_keterlambatan,
-                ]
-            ]
-        ], 200);
+    /**
+     * Update transaksi (hanya untuk admin).
+     *
+     * @param UpdateApiTransaksiRequest $request
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function update(UpdateApiTransaksiRequest $request, $id): JsonResponse
+    {
+        try {
+            return DB::transaction(function () use ($request, $id) {
+                $transaksi = Transaksi::findOrFail($id);
+
+                $transaksi->update([
+                    'id_akun' => $request->id_akun ?? $transaksi->id_akun,
+                    'id_perorangan' => $request->id_perorangan ?? $transaksi->id_perorangan,
+                    'id_perusahaan' => $request->id_perusahaan ?? $transaksi->id_perusahaan,
+                    'tanggal_transaksi' => $request->tanggal_transaksi ?? $transaksi->tanggal_transaksi,
+                    'waktu_transaksi' => $request->waktu_transaksi ?? $transaksi->waktu_transaksi,
+                    'total_transaksi' => $request->total_transaksi ?? $transaksi->total_transaksi,
+                    'jumlah_dibayar' => $request->jumlah_dibayar ?? $transaksi->jumlah_dibayar,
+                    'metode_pembayaran' => $request->metode_pembayaran ?? $transaksi->metode_pembayaran,
+                    'id_status_transaksi' => $request->id_status_transaksi ?? $transaksi->id_status_transaksi,
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Transaksi berhasil diperbarui',
+                    'data' => new ApiTransaksiResource($transaksi->load('detailTransaksis', 'tagihan')),
+                ], 200);
+            });
+        } catch (Exception $e) {
+            Log::error('Gagal memperbarui transaksi: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui transaksi: ' . $e->getMessage(),
+                'data' => null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Ambil daftar tabung berdasarkan status (default: tersedia).
+     *
+     * @return JsonResponse
+     */
+    public function getTabung(): JsonResponse
+    {
+        try {
+            $status = request()->query('status', 'tersedia');
+            $tabungs = Tabung::whereHas('statusTabung', fn($query) => $query->where('status_tabung', $status))
+                ->with('jenisTabung', 'statusTabung')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Daftar tabung berhasil diambil',
+                'data' => ApiTabungResource::collection($tabungs),
+            ], 200);
+        } catch (Exception $e) {
+            Log::error('Gagal mengambil tabung: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil tabung: ' . $e->getMessage(),
+                'data' => null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Ambil riwayat transaksi pelanggan.
+     *
+     * @return JsonResponse
+     */
+    public function getRiwayatTransaksi(): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+            $transaksis = Transaksi::with(['detailTransaksis.tabung.jenisTabung', 'statusTransaksi', 'tagihan'])
+                ->where('id_akun', $user->id_akun)
+                ->latest()
+                ->get(); // Tambahkan get() untuk mengeksekusi query
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Riwayat transaksi berhasil diambil',
+                'data' => ApiTransaksiResource::collection($transaksis),
+            ], 200);
+        } catch (Exception $e) {
+            Log::error('Gagal mengambil riwayat transaksi: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil riwayat transaksi: ' . $e->getMessage(),
+                'data' => null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Menerima dan mencatat pembayaran cicilan untuk sebuah transaksi.
+     *
+     * @param BayarTagihanRequest $request
+     * @param int $id ID dari transaksi yang akan dibayar
+     * @return JsonResponse
+     */
+    public function bayarTagihan(BayarTagihanRequest $request, $id): JsonResponse
+    {
+        // Memulai DB Transaction untuk memastikan integritas data.
+        // Jika ada kegagalan, semua perubahan akan dibatalkan.
+        return DB::transaction(function () use ($request, $id) {
+            try {
+                // 1. Temukan transaksi beserta relasi tagihannya.
+                // findOrFail akan otomatis melempar error 404 jika transaksi tidak ditemukan.
+                $transaksi = Transaksi::with('tagihan')->findOrFail($id);
+                $tagihan = $transaksi->tagihan;
+
+                // Validasi tambahan: jangan proses jika tagihan sudah lunas.
+                if ($tagihan->status === 'lunas') {
+                    // Beri respons error yang jelas ke frontend.
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Tagihan ini sudah lunas.',
+                    ], 422); // 422 Unprocessable Entity
+                }
+
+                // Ambil jumlah pembayaran dari request yang sudah divalidasi.
+                $pembayaranBaru = (float) $request['jumlah_dibayar'];
+
+                // 2. Tambah (akumulasi) jumlah_dibayar di tabel transaksis.
+                $totalSudahDibayar = $transaksi->jumlah_dibayar + $pembayaranBaru;
+
+                // Hitung sisa tagihan yang baru.
+                $sisaBaru = $transaksi->total_transaksi - $totalSudahDibayar;
+
+                // 4. Logika untuk mengubah status jika lunas.
+                if ($sisaBaru <= 0) {
+                    // Jika LUNAS
+                    $transaksi->jumlah_dibayar = $transaksi->total_transaksi; // Set agar pas, tidak minus
+                    $transaksi->id_status_transaksi = StatusTransaksi::SUCCESS;
+
+                    // 3. Update sisa dan status di tabel tagihans.
+                    $tagihan->sisa = 0;
+                    $tagihan->status = 'lunas';
+                    $tagihan->tanggal_bayar_tagihan = now(); // Catat tanggal pelunasan
+                    $tagihan->jumlah_dibayar = $transaksi->total_transaksi;
+                } else {
+                    // Jika BELUM LUNAS (masih mencicil)
+                    $transaksi->jumlah_dibayar = $totalSudahDibayar;
+                    // id_status_transaksi tetap PENDING
+
+                    // 3. Update sisa di tabel tagihans.
+                    $tagihan->sisa = $sisaBaru;
+                    $tagihan->jumlah_dibayar = $totalSudahDibayar;
+                }
+
+                // Simpan perubahan ke database.
+                $transaksi->save();
+                $tagihan->save();
+
+                // Berikan respons sukses ke frontend.
+                // Muat ulang relasi untuk memastikan data yang dikirim adalah data terbaru.
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Pembayaran berhasil dicatat.',
+                    'data' => new ApiTransaksiResource($transaksi->fresh()->load('tagihan', 'statusTransaksi')),
+                ], 200);
+            } catch (Exception $e) {
+                // Tangani error tak terduga lainnya.
+                Log::error('Gagal memproses pembayaran: ' . $e->getMessage());
+                // Kembalikan error 500. DB::transaction akan otomatis rollback.
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan pada server saat memproses pembayaran.',
+                    'error' => $e->getMessage(),
+                ], 500);
+            }
+        });
     }
 }

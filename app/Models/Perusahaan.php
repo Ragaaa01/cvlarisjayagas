@@ -16,4 +16,9 @@ class Perusahaan extends Model
     {
         return $this->hasMany(Perorangan::class, 'id_perusahaan');
     }
+
+    public function transaksis()
+    {
+        return $this->hasMany(Transaksi::class, 'id_perusahaan', 'id_perusahaan');
+    }
 }

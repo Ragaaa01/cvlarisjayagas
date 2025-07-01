@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('perorangans', function (Blueprint $table) {
             $table->id('id_perorangan');
             $table->string('nama_lengkap');
-            $table->string('nik')->unique();
-            $table->string('no_telepon')->unique();
+            $table->string('nik');
+            $table->string('no_telepon');
             $table->text('alamat');
             $table->unsignedBigInteger('id_perusahaan')->nullable();
             $table->timestamps();
