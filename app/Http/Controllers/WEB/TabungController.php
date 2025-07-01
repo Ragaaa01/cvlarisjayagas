@@ -10,31 +10,42 @@ use App\Http\Controllers\Controller;
 
 class TabungController extends Controller
 {
-     public function index()
-{
-    $tabungs = Tabung::with(['jenisTabung', 'statusTabung'])->get();
-    $jenisTabungs = JenisTabung::all();
-    $statusTabungs = StatusTabung::all();
-    return view('admin.pages.tabung.data_tabung', compact('tabungs', 'jenisTabungs', 'statusTabungs'));
-}
+     public function index(Request $request)
+    {
+        $jenisTabungs = JenisTabung::all();
+        $query = Tabung::with(['jenisTabung', 'statusTabung']);
+
+        if ($request->filled('jenis')) {
+            $query->where('id_jenis_tabung', $request->jenis);
+        }
+
+        $tabungs = $query->get();
+
+        return view('admin.pages.tabung.data_tabung', compact('tabungs', 'jenisTabungs'));
+    }
 
     public function create()
     {
         $jenisTabungs = JenisTabung::all();
         $statusTabungs = StatusTabung::all();
-        return view('admin.pages.tabung.modal_create', compact('jenisTabungs', 'statusTabungs'));
+        return view('admin.pages.tabung.create', compact('jenisTabungs', 'statusTabungs'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'kode_tabung' => 'required',
+            'kode_tabung' => 'required|unique:tabungs,kode_tabung',
             'id_jenis_tabung' => 'required',
             'id_status_tabung' => 'required',
         ]);
 
-        Tabung::create($request->all());
-        return redirect()->route('data_tabung')->with('success', 'Tabung created successfully.');
+        Tabung::create([
+            'kode_tabung' => $request->kode_tabung,
+            'id_jenis_tabung' => $request->id_jenis_tabung,
+            'id_status_tabung' => $request->id_status_tabung,
+        ]);
+
+        return redirect()->route('data_tabung')->with('success', 'Tabung berhasil ditambahkan.');
     }
 
     public function show($id)
@@ -48,7 +59,7 @@ class TabungController extends Controller
         $tabung = Tabung::findOrFail($id);
         $jenisTabungs = JenisTabung::all();
         $statusTabungs = StatusTabung::all();
-        return view('admin.pages.tabung.modal_edit', compact('tabung', 'jenisTabungs', 'statusTabungs'));
+        return view('admin.pages.tabung.edit', compact('tabung', 'jenisTabungs', 'statusTabungs'));
     }
 
     public function update(Request $request, $id)
@@ -61,13 +72,14 @@ class TabungController extends Controller
 
         $tabung = Tabung::findOrFail($id);
         $tabung->update($request->all());
-        return redirect()->route('data_tabung')->with('success', 'Tabung updated successfully.');
+
+        return redirect()->route('data_tabung')->with('success', 'Tabung berhasil diperbarui.');
     }
 
     public function destroy($id)
     {
         $tabung = Tabung::findOrFail($id);
         $tabung->delete();
-        return redirect()->route('data_tabung')->with('success', 'Tabung deleted successfully.');
+        return redirect()->route('data_tabung')->with('success', 'Tabung berhasil dihapus.');
     }
 }

@@ -2,11 +2,21 @@
 
 @section('content')
 <div class="container mt-4">
+    <h2>Data Status Tabung</h2>
+
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Status Tabung</h2>
-        <button class="btn btn-primary" data-toggle="modal" data-target="#createModal">
+        {{-- Tombol Tambah di kiri --}}
+        <a href="{{ route('status_tabung.create') }}" class="btn btn-primary">
             <i class="fas fa-plus mr-1"></i> Tambah Data
-        </button>
+        </a>
+
+        {{-- Tombol Export di kanan --}}
+        <form action="{{ url()->current() . '/export' }}" method="POST" class="d-inline">
+            @csrf
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-file-export mr-1"></i> Export Data
+            </button>
+        </form>
     </div>
 
     {{-- Alert --}}
@@ -14,7 +24,7 @@
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
-    {{-- Table --}}
+    {{-- Tabel --}}
     <div class="table-responsive">
         <table class="table table-bordered table-striped">
             <thead class="thead-dark text-center">
@@ -30,33 +40,19 @@
                     <td>{{ $status->id_status_tabung }}</td>
                     <td>{{ ucfirst($status->status_tabung) }}</td>
                     <td>
-                        <div class="d-flex justify-content-center">
-                            {{-- Detail --}}
-                            <a href="{{ route('jenis_tabung.show', $status->id_status_tabung) }}"
-                               class="btn btn-sm btn-info mx-1" title="Lihat Detail">
-                                <i class="fas fa-eye"></i>
-                            </a>
-
-                            {{-- Edit --}}
-                            <button class="btn btn-sm btn-warning mx-1" title="Edit Data"
-                                    data-toggle="modal"
-                                    data-target="#editModal-{{ $status->id_status_tabung }}">
-                                <i class="fas fa-edit"></i>
+                        <a href="{{ route('jenis_tabung.show', $status->id_status_tabung) }}" class="btn btn-sm btn-info mx-1">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{{ route('status_tabung.edit', $status->id_status_tabung) }}" class="btn btn-sm btn-warning mx-1">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form action="{{ route('status_tabung.destroy', $status->id_status_tabung) }}" method="POST" class="d-inline mx-1" onsubmit="return confirm('Yakin ingin menghapus?')">
+                            @csrf
+                            @method('DELETE')
+                            <button class="btn btn-sm btn-danger" title="Hapus">
+                                <i class="fas fa-trash-alt"></i>
                             </button>
-
-                            {{-- Modal Edit --}}
-                            @include('admin.pages.status_tabung.modal_edit', ['status' => $status])
-
-                            {{-- Hapus --}}
-                            <form action="{{ route('status_tabung.destroy', $status->id_status_tabung) }}"
-                                  method="POST" onsubmit="return confirm('Yakin ingin menghapus?')" class="d-inline mx-1">
-                                @csrf
-                                @method('DELETE')
-                                <button class="btn btn-sm btn-danger" title="Hapus">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </form>
-                        </div>
+                        </form>
                     </td>
                 </tr>
                 @empty
@@ -68,7 +64,4 @@
         </table>
     </div>
 </div>
-
-{{-- Modal Tambah --}}
-@include('admin.pages.status_tabung.modal_create')
 @endsection

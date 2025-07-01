@@ -10,10 +10,20 @@
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
-    <button class="btn btn-primary mb-3" data-toggle="modal" data-target="#addModal" title="Tambah Akun">
-        <i class="fas fa-plus"></i> Tambah Akun
-    </button>
+    {{-- Tombol Aksi --}}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        {{-- Tambah Akun --}}
+        <a href="{{ route('create_akun') }}" class="btn btn-primary" title="Tambah Akun">
+            <i class="fas fa-plus"></i> Tambah Akun
+        </a>
 
+        {{-- Export Data --}}
+        <a href="#" class="btn btn-success" title="Export Seluruh Data Akun">
+            <i class="fas fa-file-export"></i> Export Data
+        </a>
+    </div>
+
+    {{-- Tabel Data Akun --}}
     <table class="table table-bordered">
         <thead class="thead-light">
             <tr>
@@ -40,7 +50,7 @@
                         <a href="{{ route('show_data_akun', $akun->id_akun) }}" class="btn btn-info btn-sm mx-1" title="Detail">
                             <i class="fas fa-eye"></i>
                         </a>
-                        <a href="#" class="btn btn-warning btn-sm mx-1" data-toggle="modal" data-target="#editModal{{ $akun->id_akun }}" title="Edit">
+                        <a href="{{ route('edit_akun', $akun->id_akun) }}" class="btn btn-warning btn-sm mx-1" title="Edit">
                             <i class="fas fa-edit"></i>
                         </a>
                         <form action="{{ route('delete_akun', $akun->id_akun) }}" method="POST" class="d-inline mx-1">
@@ -56,54 +66,5 @@
             @endforeach
         </tbody>
     </table>
-
-    {{-- Include file modal --}}
-    @include('admin.pages.akun.modals')
 </div>
 @endsection
-
-@push('scripts')
-<script>
-    $(document).ready(function () {
-        // Tambah akun
-        $('#addIdPerorangan').select2({
-            dropdownParent: $('#addModal'),
-            placeholder: "-- Pilih ID, Nama, dan NIK Perorangan --",
-            allowClear: true,
-            width: '100%',
-            ajax: {
-                url: '{{ route("search_perorangan") }}',
-                dataType: 'json',
-                delay: 250,
-                processResults: function (data) {
-                    return {
-                        results: data // Data sudah dalam bentuk {id, text}
-                    };
-                },
-                cache: true
-            }
-        });
-
-        // Edit akun
-        @foreach($akuns as $akun)
-        $('#editIdPerorangan{{ $akun->id_akun }}').select2({
-            dropdownParent: $('#editModal{{ $akun->id_akun }}'),
-            placeholder: "-- Pilih ID, Nama, dan NIK Perorangan --",
-            allowClear: true,
-            width: '100%',
-            ajax: {
-                url: '{{ route("search_perorangan") }}',
-                dataType: 'json',
-                delay: 250,
-                processResults: function (data) {
-                    return {
-                        results: data
-                    };
-                },
-                cache: true
-            }
-        });
-        @endforeach
-    });
-</script>
-@endpush

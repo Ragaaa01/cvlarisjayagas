@@ -22,6 +22,13 @@ class PeroranganController extends Controller
     return view('admin.pages.perorangan.data_perorangan', compact('perorangans', 'perusahaans'));
 }
 
+public function create()
+{
+    $usedPerusahaanIds = Perorangan::whereNotNull('id_perusahaan')->pluck('id_perusahaan');
+    $perusahaans = Perusahaan::whereNotIn('id_perusahaan', $usedPerusahaanIds)->get();
+
+    return view('admin.pages.perorangan.create', compact('perusahaans'));
+}
 
     public function store(Request $request)
 {
@@ -47,6 +54,19 @@ class PeroranganController extends Controller
     return redirect()->route('data_perorangan')->with('success', 'Data berhasil ditambahkan.');
 }
 
+public function edit($id)
+{
+    $perorangan = Perorangan::findOrFail($id);
+
+    $usedPerusahaanIds = Perorangan::whereNotNull('id_perusahaan')
+        ->where('id_perorangan', '!=', $id)
+        ->pluck('id_perusahaan');
+
+    $perusahaans = Perusahaan::whereNotIn('id_perusahaan', $usedPerusahaanIds)->get();
+
+    return view('admin.pages.perorangan.edit', compact('perorangan', 'perusahaans'));
+}
+
 
 public function update(Request $request, $id)
 {
@@ -58,23 +78,36 @@ public function update(Request $request, $id)
         'id_perusahaan' => 'nullable|exists:perusahaans,id_perusahaan',
     ]);
 
-    // Cek duplikat kecuali dirinya sendiri
+    // Cek duplikat (selain data dirinya sendiri)
     $duplicate = Perorangan::where(function ($query) use ($request) {
-                        $query->where('nik', $request->nik)
-                              ->orWhere('no_telepon', $request->no_telepon);
-                    })
-                    ->where('id_perorangan', '!=', $id)
-                    ->first();
+            $query->where('nik', $request->nik)
+                  ->orWhere('no_telepon', $request->no_telepon);
+        })
+        ->where('id_perorangan', '!=', $id)
+        ->first();
 
     if ($duplicate) {
         return redirect()->back()->withInput()->with('warning', 'Data dengan NIK atau No Telepon yang sama sudah ada.');
     }
 
     $perorangan = Perorangan::findOrFail($id);
+
+    $isChanged =
+        $perorangan->nama_lengkap !== $request->nama_lengkap ||
+        $perorangan->nik !== $request->nik ||
+        $perorangan->no_telepon !== $request->no_telepon ||
+        $perorangan->alamat !== $request->alamat ||
+        $perorangan->id_perusahaan != $request->id_perusahaan;
+
+    if (!$isChanged) {
+        return redirect()->route('data_perorangan')->with('info', 'Tidak ada perubahan pada data.');
+    }
+
     $perorangan->update($request->all());
 
     return redirect()->route('data_perorangan')->with('success', 'Data berhasil diperbarui.');
 }
+
 
 
     public function destroy($id)

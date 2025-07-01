@@ -30,16 +30,12 @@
 
     @php
         $masterRoutes = [
-            'data_akun',
-            'data_perorangan',
-            'data_perusahaan',
-            'data_jenis_tabung',
-            'data_status_tabung'
+            'data_akun', 'data_perorangan', 'data_perusahaan',
+            'data_jenis_tabung', 'data_status_tabung', 'data_tabung'
         ];
         $masterActive = collect($masterRoutes)->contains(fn($r) => request()->routeIs($r));
     @endphp
 
-    <!-- Collapse Menu: Master Data -->
     <li class="nav-item {{ $masterActive ? 'active' : '' }}">
         <a class="nav-link {{ $masterActive ? '' : 'collapsed' }}" href="#" data-toggle="collapse"
            data-target="#collapseMasterData" aria-expanded="{{ $masterActive ? 'true' : 'false' }}"
@@ -64,13 +60,13 @@
                 </a>
                 <a class="collapse-item text-light {{ request()->routeIs('data_jenis_tabung') ? 'active' : '' }}"
                    href="{{ route('data_jenis_tabung') }}">
-                    <i class="fas fa-gas-pump mr-2"></i> Data Jenis Tabung
+                    <i class="fas fa-gas-pump mr-2"></i> Jenis Tabung
                 </a>
                 <a class="collapse-item text-light {{ request()->routeIs('data_status_tabung') ? 'active' : '' }}"
                    href="{{ route('data_status_tabung') }}">
-                    <i class="fas fa-gas-pump mr-2"></i> Data Status Tabung
+                    <i class="fas fa-gas-pump mr-2"></i> Status Tabung
                 </a>
-                <a class="collapse-item text-light{{ request()->routeIs('data_tabung') ? 'active' : '' }}"
+                <a class="collapse-item text-light {{ request()->routeIs('data_tabung') ? 'active' : '' }}"
                    href="{{ route('data_tabung') }}">
                     <i class="fas fa-cube mr-2"></i> Data Tabung
                 </a>
@@ -81,37 +77,58 @@
     <!-- Divider -->
     <hr class="sidebar-divider">
 
+    <!-- Pengaturan Transaksi (Dijadikan 2 item sejajar dengan Transaksi) -->
+    <li class="nav-item {{ request()->routeIs('jenis_transaksi.index') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('jenis_transaksi.index') }}">
+            <i class="fas fa-fw fa-random"></i>
+            <span>Jenis Transaksi</span>
+        </a>
+    </li>
+    <li class="nav-item {{ request()->routeIs('admin.status_transaksi.index') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('admin.status_transaksi.index') }}">
+            <i class="fas fa-fw fa-toggle-on"></i>
+            <span>Status Transaksi</span>
+        </a>
+    </li>
+
     <!-- Transaksi -->
-    <li class="nav-item">
-        <a class="nav-link" href="#">
+    <li class="nav-item {{ request()->routeIs('transaksis.*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('transaksis.index') }}">
             <i class="fas fa-fw fa-cash-register"></i>
             <span>Transaksi</span>
         </a>
     </li>
 
-    <!-- Tagihan -->
+    <!-- Divider -->
+    <hr class="sidebar-divider">
+
+    <!-- Menu Fitur Tambahan -->
     <li class="nav-item">
-        <a class="nav-link" href="#">
+        <a class="nav-link disabled" href="#" onclick="return false;" style="cursor: not-allowed;">
             <i class="fas fa-fw fa-file-invoice-dollar"></i>
             <span>Tagihan</span>
         </a>
     </li>
-
-    <!-- Peminjaman -->
     <li class="nav-item">
-        <a class="nav-link" href="#">
+        <a class="nav-link disabled" href="#" onclick="return false;" style="cursor: not-allowed;">
             <i class="fas fa-fw fa-truck-moving"></i>
             <span>Peminjaman</span>
         </a>
     </li>
-
-    <!-- Pengembalian -->
     <li class="nav-item">
-        <a class="nav-link" href="#">
+        <a class="nav-link disabled" href="#" onclick="return false;" style="cursor: not-allowed;">
             <i class="fas fa-fw fa-undo-alt"></i>
             <span>Pengembalian</span>
         </a>
     </li>
+
+    <!-- Riwayat Transaksi -->
+<li class="nav-item">
+    <a class="nav-link disabled" href="#" onclick="return false;" style="cursor: not-allowed;">
+        <i class="fas fa-fw fa-history"></i>
+        <span>Riwayat Transaksi</span>
+    </a>
+</li>
 
 </ul>
 <!-- End of Sidebar -->

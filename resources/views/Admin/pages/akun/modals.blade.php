@@ -1,4 +1,4 @@
-<!-- Modal Tambah Akun -->
+<!-- 
 <div class="modal fade" id="addModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <form action="{{ route('store_akun') }}" method="POST">
@@ -37,7 +37,7 @@
     </div>
 </div>
 
-<!-- Modal Edit Akun -->
+
 @foreach($akuns as $akun)
 <div class="modal fade" id="editModal{{ $akun->id_akun }}" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
@@ -82,4 +82,4 @@
         </form>
     </div>
 </div>
-@endforeach
+@endforeach -->
