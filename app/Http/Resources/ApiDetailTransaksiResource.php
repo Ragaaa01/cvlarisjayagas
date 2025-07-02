@@ -43,6 +43,7 @@ class ApiDetailTransaksiResource extends JsonResource
                     : null,
                 'status_pinjam' => $this->peminjaman->status_pinjam,
             ] : null,
+            'tabung' => new ApiTabungResource($this->whenLoaded('tabung')),
         ];
     }
 }

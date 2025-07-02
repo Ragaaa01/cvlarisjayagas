@@ -64,9 +64,19 @@ class Transaksi extends Model
         return $this->hasMany(DetailTransaksi::class, 'id_transaksi', 'id_transaksi');
     }
 
-    public function tagihan()
+    public function tagihans()
     {
-        return $this->hasOne(Tagihan::class, 'id_transaksi', 'id_transaksi');
+        return $this->hasMany(Tagihan::class, 'id_transaksi', 'id_transaksi');
+    }
+
+    /**
+     * Helper untuk mendapatkan SATU catatan tagihan TERBARU.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function latestTagihan()
+    {
+        return $this->hasOne(Tagihan::class, 'id_transaksi', 'id_transaksi')->latestOfMany('id_tagihan');
     }
 
     public function riwayatTransaksis()
