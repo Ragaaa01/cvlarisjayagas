@@ -19,7 +19,7 @@
 <div class="form-group">
     <label for="harga">Harga</label>
     <input type="text" name="harga" class="form-control format-rupiah @error('harga') is-invalid @enderror"
-        value="{{ old('harga', isset($jenis) ? 'Rp'.number_format($jenis->harga, 0, ',', '.') : '') }}" required>
+        value="{{ old('harga', isset($jenis) ? $jenis->harga : '') }}" required>
     @error('harga')
         <div class="invalid-feedback">{{ $message }}</div>
     @enderror

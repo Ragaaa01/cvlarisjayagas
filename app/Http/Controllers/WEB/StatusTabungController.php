@@ -14,6 +14,11 @@ class StatusTabungController extends Controller
         return view('admin.pages.status_tabung.data_status_tabung', compact('data'));
     }
 
+    public function create()
+    {
+        return view('admin.pages.status_tabung.create');
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -21,7 +26,13 @@ class StatusTabungController extends Controller
         ]);
 
         StatusTabung::create($request->all());
-        return redirect()->back()->with('success', 'Status tabung berhasil ditambahkan.');
+        return redirect()->route('data_status_tabung')->with('success', 'Status tabung berhasil ditambahkan.');
+    }
+
+    public function edit($id)
+    {
+        $status = StatusTabung::findOrFail($id);
+        return view('admin.pages.status_tabung.edit', compact('status'));
     }
 
     public function update(Request $request, $id)
@@ -33,7 +44,7 @@ class StatusTabungController extends Controller
         $status = StatusTabung::findOrFail($id);
         $status->update($request->all());
 
-        return redirect()->back()->with('success', 'Status tabung berhasil diperbarui.');
+        return redirect()->route('data_status_tabung')->with('success', 'Status tabung berhasil diperbarui.');
     }
 
     public function destroy($id)
@@ -41,7 +52,7 @@ class StatusTabungController extends Controller
         $status = StatusTabung::findOrFail($id);
         $status->delete();
 
-        return redirect()->back()->with('success', 'Status tabung berhasil dihapus.');
+        return redirect()->route('data_status_tabung')->with('success', 'Status tabung berhasil dihapus.');
     }
 
     public function show($id)

@@ -8,10 +8,15 @@ use App\Http\Controllers\Controller;
 
 class JenisTabungController extends Controller
 {
-     public function index()
+      public function index()
     {
         $jenis_tabung = JenisTabung::all();
         return view('admin.pages.jenis_tabung.data_jenis_tabung', compact('jenis_tabung'));
+    }
+
+    public function create()
+    {
+        return view('admin.pages.jenis_tabung.create');
     }
 
     public function store(Request $request)
@@ -20,18 +25,16 @@ class JenisTabungController extends Controller
             'kode_jenis' => 'required|unique:jenis_tabungs,kode_jenis',
             'nama_jenis' => 'required|unique:jenis_tabungs,nama_jenis',
             'harga' => 'required|numeric'
-        ], [
-            'kode_jenis.unique' => 'Kode jenis sudah digunakan.',
-            'nama_jenis.unique' => 'Nama jenis sudah digunakan.',
         ]);
 
-        JenisTabung::create([
-            'kode_jenis' => $request->kode_jenis,
-            'nama_jenis' => $request->nama_jenis,
-            'harga' => $request->harga
-        ]);
-
+        JenisTabung::create($request->only('kode_jenis', 'nama_jenis', 'harga'));
         return redirect()->route('data_jenis_tabung')->with('success', 'Jenis tabung berhasil ditambahkan');
+    }
+
+    public function edit($id)
+    {
+        $jenis = JenisTabung::findOrFail($id);
+        return view('admin.pages.jenis_tabung.edit', compact('jenis'));
     }
 
     public function update(Request $request, $id)
@@ -44,19 +47,13 @@ class JenisTabungController extends Controller
             'harga' => 'required|numeric'
         ]);
 
-        $jenis->update([
-            'kode_jenis' => $request->kode_jenis,
-            'nama_jenis' => $request->nama_jenis,
-            'harga' => $request->harga
-        ]);
-
+        $jenis->update($request->only('kode_jenis', 'nama_jenis', 'harga'));
         return redirect()->route('data_jenis_tabung')->with('success', 'Jenis tabung berhasil diperbarui');
     }
 
     public function destroy($id)
     {
-        $jenis = JenisTabung::findOrFail($id);
-        $jenis->delete();
+        JenisTabung::findOrFail($id)->delete();
         return redirect()->route('data_jenis_tabung')->with('success', 'Jenis tabung berhasil dihapus');
     }
 
