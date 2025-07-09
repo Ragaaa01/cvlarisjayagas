@@ -137,6 +137,9 @@ class ApiTransaksiController extends Controller
                     'batas_waktu_peminjaman' => $detail['id_jenis_transaksi'] == 1 ? now()->addDays(30)->toDateString() : null,
                 ]);
                 if ($detail['id_jenis_transaksi'] == 1) {
+                    Tabung::where('id_tabung', $detail['id_tabung'])->update(['id_status_tabung' => StatusTabung::DIPINJAM]);
+
+                    // Buat juga catatan peminjaman
                     Peminjaman::create([
                         'id_detail_transaksi' => $detailTransaksi->id_detail_transaksi,
                         'tanggal_pinjam' => now()->toDateString(),
