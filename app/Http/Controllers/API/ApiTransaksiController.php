@@ -147,7 +147,7 @@ class ApiTransaksiController extends Controller
                     ]);
                 }
             }
-            Tabung::whereIn('id_tabung', array_column($detailTransaksis, 'id_tabung'))->update(['id_status_tabung' => StatusTabung::DIPINJAM]);
+
 
             // Buat catatan tagihan pertama
             $sisa = $totalTransaksi - $validatedData['jumlah_dibayar'];
