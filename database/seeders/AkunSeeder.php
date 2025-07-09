@@ -21,8 +21,8 @@ class AkunSeeder extends Seeder
             [
                 'id_akun' => 1,
                 'id_perorangan' => 1,
-                'email' => 'administrator@larisjayagas.com',
-                'password' => Hash::make('administrator123'),
+                'email' => 'admin@gmail.com',
+                'password' => Hash::make('password'),
                 'role' => 'administrator',
                 'status_aktif' => true,
                 'remember_token' => Str::random(10),
@@ -32,8 +32,8 @@ class AkunSeeder extends Seeder
             [
                 'id_akun' => 2,
                 'id_perorangan' => 31,
-                'email' => 'pelanggan1@larisjayagas.com',
-                'password' => Hash::make('pelanggan123'),
+                'email' => 'pelanggan1@gmail.com',
+                'password' => Hash::make('password'),
                 'role' => 'pelanggan',
                 'status_aktif' => true,
                 'remember_token' => Str::random(10),

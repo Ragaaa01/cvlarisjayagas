@@ -105,9 +105,9 @@ Route::get('/admin/transaksi', [TransaksiController::class, 'index'])->name('tra
 Route::get('/admin/transaksi/create', [TransaksiController::class, 'create'])->name('transaksis.create');
 Route::post('/admin/transaksi', [TransaksiController::class, 'store'])->name('transaksis.store');
 Route::get('/admin/transaksi/{transaksi}', [TransaksiController::class, 'show'])->name('transaksis.show');
-Route::get('/admin/transaksi/{transaksi}/edit', [TransaksiController::class, 'edit'])->name('transaksis.edit');
-Route::put('/admin/transaksi/{transaksi}', [TransaksiController::class, 'update'])->name('transaksis.update');
-Route::delete('/admin/transaksi/{transaksi}', [TransaksiController::class, 'destroy'])->name('transaksis.destroy');
+//Route::get('/admin/transaksi/{transaksi}/edit', [TransaksiController::class, 'edit'])->name('transaksis.edit');
+//Route::put('/admin/transaksi/{transaksi}', [TransaksiController::class, 'update'])->name('transaksis.update');
+//Route::delete('/admin/transaksi/{transaksi}', [TransaksiController::class, 'destroy'])->name('transaksis.destroy');
 
 // Jenis Transaksi
 
@@ -127,14 +127,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::resource('status_transaksi', StatusTransaksiController::class);
 
     // Rute untuk Peminjaman
-    Route::resource('peminjaman', PeminjamanController::class)->except(['show']);
+    Route::resource('peminjaman', PeminjamanController::class);
 
     // Rute untuk Pengembalian
-    Route::resource('pengembalian', PengembalianController::class)->except(['show']);
-
+    Route::resource('pengembalian', PengembalianController::class)->only(['index']);
+    Route::post('pengembalian/{peminjaman}', [PengembalianController::class, 'store'])->name('pengembalian.store');
+    
     // Rute untuk Tagihan
-    Route::resource('tagihan', TagihanController::class)->except(['show']);
-
+    Route::resource('tagihan', TagihanController::class)->only(['index', 'show']);
+    Route::post('tagihan/{id}/pay', [TagihanController::class, 'pay'])->name('tagihan.pay');
+    
     // Rute untuk Notifikasi
     Route::resource('notifikasi', NotifikasiController::class)->except(['show']);
     Route::get('notifikasi/{id}/mark-as-read', [NotifikasiController::class, 'markAsRead'])->name('notifikasi.mark_as_read');

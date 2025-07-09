@@ -9,18 +9,14 @@ use App\Http\Controllers\Controller;
 
 class PeroranganController extends Controller
 {
-    public function index()
-{
-    $perorangans = Perorangan::with('perusahaan')->get();
+   public function index()
+    {
+        $perorangans = Perorangan::with('perusahaan')->oldest()->paginate(10);
+        $usedPerusahaanIds = Perorangan::whereNotNull('id_perusahaan')->pluck('id_perusahaan');
+        $perusahaans = Perusahaan::whereNotIn('id_perusahaan', $usedPerusahaanIds)->get();
 
-    // Ambil ID perusahaan yang sudah dipakai
-    $usedPerusahaanIds = Perorangan::whereNotNull('id_perusahaan')->pluck('id_perusahaan');
-
-    // Filter hanya perusahaan yang belum dipakai
-    $perusahaans = Perusahaan::whereNotIn('id_perusahaan', $usedPerusahaanIds)->get();
-
-    return view('admin.pages.perorangan.data_perorangan', compact('perorangans', 'perusahaans'));
-}
+        return view('admin.pages.perorangan.data_perorangan', compact('perorangans', 'perusahaans'));
+    }
 
 public function create()
 {

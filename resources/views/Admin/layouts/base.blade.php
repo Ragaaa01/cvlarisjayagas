@@ -10,9 +10,11 @@
     <link href="{{ asset('/assets/vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link href="{{ asset('/assets/css/sb-admin-2.min.css') }}" rel="stylesheet">
-
     <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- SweetAlert2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    @yield('styles')
 </head>
 <body id="page-top">
     <!-- Page Wrapper -->
@@ -56,10 +58,7 @@
                                 <a class="dropdown-item" href="#">
                                     <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i> Profile
                                 </a>
-
                                 <div class="dropdown-divider"></div>
-
-                                <!-- Logout Form -->
                                 <form action="{{ route('logout') }}" method="POST" class="d-inline">
                                     @csrf
                                     <button type="submit" class="dropdown-item">
@@ -81,7 +80,7 @@
             <footer class="sticky-footer bg-white">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto">
-                        <span>&copy; {{ date('Y') }} Your Company</span>
+                        <span>© {{ date('Y') }} Your Company</span>
                     </div>
                 </div>
             </footer>
@@ -96,9 +95,10 @@
     <script src="{{ asset('/assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('/assets/vendor/jquery-easing/jquery.easing.min.js') }}"></script>
     <script src="{{ asset('/assets/js/sb-admin-2.min.js') }}"></script>
-
     <!-- Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
 
     @stack('scripts')
 </body>

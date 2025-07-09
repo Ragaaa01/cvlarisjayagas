@@ -10,14 +10,14 @@
             </a>
         </div>
         <div class="card-body">
-            <form action="{{ route('transaksis.store') }}" method="POST">
+            <form action="{{ route('transaksis.store') }}" method="POST" id="transaksiForm">
                 @csrf
                 <div class="form-group">
                     <label for="akun-select" class="font-weight-bold">Pilih Akun</label>
                     <select name="id_akun" id="akun-select" class="form-control @error('id_akun') is-invalid @enderror custom-select">
                         <option value="">-- Pilih Akun --</option>
                         @foreach($akuns as $akun)
-                            <option value="{{ $akun->id_akun }}">{{ $akun->email }} - {{ $akun->perorangan->nama_lengkap ?? '-' }} - {{ $akun->perorangan->perusahaan->nama_perusahaan ?? '-' }}</option>
+                            <option value="{{ $akun->id_akun }}">{{ $akun->email }} - {{ $akun->perorangan->nama_lengkap ?? '-' }} - {{ $akun->perorangan->perusahaan->nama_perusahaan ?? 'Tidak Ada' }}</option>
                         @endforeach
                     </select>
                     @error('id_akun')
@@ -29,7 +29,7 @@
                     <select name="id_perorangan" id="perorangan-select" class="form-control @error('id_perorangan') is-invalid @enderror custom-select">
                         <option value="">-- Pilih Perorangan --</option>
                         @foreach($perorangans as $perorangan)
-                            <option value="{{ $perorangan->id_perorangan }}">{{ $perorangan->nama_lengkap }} - {{ $perorangan->nik }}</option>
+                            <option value="{{ $perorangan->id_perorangan }}" data-nama="{{ $perorangan->nama_lengkap }}" data-perusahaan="{{ $perorangan->perusahaan->nama_perusahaan ?? '-' }}">{{ $perorangan->nama_lengkap }} - {{ $perorangan->nik }}</option>
                         @endforeach
                     </select>
                     @error('id_perorangan')
@@ -92,7 +92,7 @@
                     </div>
                     <div class="form-group col-md-4">
                         <label for="status_transaksi_display" class="font-weight-bold">Status</label>
-                        <input type="text" id="status_transaksi_display" class="form-control" readonly value="Pending">
+                        <input type="text" id="status_transaksi_display" class="form-control" readonly value="Tertunda">
                     </div>
                 </div>
                 <div class="form-group">
@@ -105,20 +105,6 @@
                         <div class="detail-item bg-light p-3 rounded mb-3">
                             <div class="row align-items-center">
                                 <div class="col-md-3 mb-3 mb-md-0">
-                                    <label for="detail_transaksi_0_id_tabung" class="font-weight-bold">Tabung</label>
-                                    <select name="detail_transaksi[0][id_tabung]" id="detail_transaksi_0_id_tabung" class="form-control tabung-select @error('detail_transaksi.0.id_tabung') is-invalid @enderror custom-select" required>
-                                        <option value="">-- Pilih Tabung --</option>
-                                        @foreach($tabungs as $tabung)
-                                            @if($tabung->statusTabung->status_tabung === 'tersedia')
-                                                <option value="{{ $tabung->id_tabung }}" data-harga="{{ $tabung->jenisTabung->harga ?? 0 }}">{{ $tabung->kode_tabung }}</option>
-                                            @endif
-                                        @endforeach
-                                    </select>
-                                    @error('detail_transaksi.0.id_tabung')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-md-3 mb-3 mb-md-0">
                                     <label for="detail_transaksi_0_id_jenis_transaksi" class="font-weight-bold">Jenis Transaksi</label>
                                     <select name="detail_transaksi[0][id_jenis_transaksi]" id="detail_transaksi_0_id_jenis_transaksi" class="form-control jenis-transaksi-select @error('detail_transaksi.0.id_jenis_transaksi') is-invalid @enderror custom-select" required>
                                         <option value="">-- Pilih Jenis --</option>
@@ -127,6 +113,15 @@
                                         @endforeach
                                     </select>
                                     @error('detail_transaksi.0.id_jenis_transaksi')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-3 mb-3 mb-md-0">
+                                    <label for="detail_transaksi_0_id_tabung" class="font-weight-bold">Tabung</label>
+                                    <select name="detail_transaksi[0][id_tabung]" id="detail_transaksi_0_id_tabung" class="form-control tabung-select @error('detail_transaksi.0.id_tabung') is-invalid @enderror custom-select" disabled required>
+                                        <option value="">-- Pilih Tabung --</option>
+                                    </select>
+                                    @error('detail_transaksi.0.id_tabung')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -141,6 +136,7 @@
                                 <div class="col-md-2 mb-3 mb-md-0">
                                     <label for="detail_transaksi_0_batas_waktu" class="font-weight-bold">Batas Waktu Peminjaman</label>
                                     <input type="text" class="form-control batas-waktu-peminjaman-display" readonly value="-">
+                                    <input type="hidden" name="detail_transaksi[0][batas_waktu_peminjaman]" class="batas-waktu-peminjaman" value="">
                                 </div>
                                 <div class="col-md-1">
                                     <button type="button" class="btn btn-danger btn-sm remove-detail mt-4" title="Hapus Detail">
@@ -158,7 +154,7 @@
                             <button type="button" class="btn btn-danger btn-sm mr-2 d-flex align-items-center" onclick="window.location.href='{{ route('transaksis.index') }}'">
                                 <i class="fas fa-times mr-2"></i> Batal
                             </button>
-                            <button type="submit" class="btn btn-primary btn-sm d-flex align-items-center">
+                            <button type="submit" class="btn btn-primary btn-sm d-flex align-items-center" id="submitButton">
                                 <i class="fas fa-save mr-2"></i> Simpan
                             </button>
                         </div>
@@ -206,8 +202,8 @@
     function updateDateTime() {
         const now = new Date();
         const options = { timeZone: 'Asia/Jakarta' };
-        const date = now.toLocaleDateString('en-CA', options); // Format YYYY-MM-DD
-        const time = now.toLocaleTimeString('en-GB', { ...options, hour: '2-digit', minute: '2-digit' }); // Format HH:mm
+        const date = now.toLocaleDateString('en-CA', options);
+        const time = now.toLocaleTimeString('en-GB', { ...options, hour: '2-digit', minute: '2-digit' });
         $('#tanggal_transaksi_display').val(date);
         $('#waktu_transaksi_display').val(time);
         $('#tanggal_transaksi').val(date);
@@ -216,19 +212,19 @@
         updateAllBatasWaktuPeminjaman();
     }
 
-    // Fungsi untuk memperbarui status transaksi dan tanggal jatuh tempo secara real-time
+    // Fungsi untuk memperbarui status transaksi dan tanggal jatuh tempo
     function updateStatus() {
         const total = parseInt($('#total_transaksi').val()) || 0;
         const jumlahDibayar = parseInt($('#jumlah_dibayar').val()) || 0;
         const statusDisplay = $('#status_transaksi_display');
         if (jumlahDibayar >= total && total > 0) {
-            statusDisplay.val('Success');
+            statusDisplay.val('Sukses');
             statusDisplay.removeClass('text-warning text-danger').addClass('text-success');
         } else if (total > 0) {
-            statusDisplay.val('Pending');
+            statusDisplay.val('Tertunda');
             statusDisplay.removeClass('text-success text-danger').addClass('text-warning');
         } else {
-            statusDisplay.val('Pending');
+            statusDisplay.val('Tertunda');
             statusDisplay.removeClass('text-success text-danger').addClass('text-warning');
         }
         updateTanggalJatuhTempo();
@@ -239,10 +235,10 @@
         const status = $('#status_transaksi_display').val();
         const tanggalTransaksi = $('#tanggal_transaksi').val();
         const tanggalJatuhTempoDisplay = $('#tanggal_jatuh_tempo_display');
-        if (status === 'Pending' && tanggalTransaksi) {
+        if (status === 'Tertunda' && tanggalTransaksi) {
             const date = new Date(tanggalTransaksi);
             date.setDate(date.getDate() + 30);
-            const jatuhTempo = date.toLocaleDateString('en-CA'); // Format YYYY-MM-DD
+            const jatuhTempo = date.toLocaleDateString('en-CA');
             tanggalJatuhTempoDisplay.val(jatuhTempo);
         } else {
             tanggalJatuhTempoDisplay.val('-');
@@ -253,14 +249,17 @@
     function updateBatasWaktuPeminjaman($select) {
         const jenisTransaksi = $select.find('option:selected').data('nama') || '';
         const $batasWaktuInput = $select.closest('.row').find('.batas-waktu-peminjaman-display');
+        const $batasWaktuHidden = $select.closest('.row').find('.batas-waktu-peminjaman');
         const tanggalTransaksi = $('#tanggal_transaksi').val();
         if (jenisTransaksi.toLowerCase().trim() === 'peminjaman' && tanggalTransaksi) {
             const date = new Date(tanggalTransaksi);
             date.setDate(date.getDate() + 30);
-            const batasWaktu = date.toLocaleDateString('en-CA'); // Format YYYY-MM-DD
+            const batasWaktu = date.toLocaleDateString('en-CA');
             $batasWaktuInput.val(batasWaktu);
+            $batasWaktuHidden.val(batasWaktu);
         } else {
             $batasWaktuInput.val('-');
+            $batasWaktuHidden.val('');
         }
     }
 
@@ -272,50 +271,62 @@
     }
 
     // Simpan daftar tabung asli dari server
-    const originalTabungOptions = @json($tabungs->filter(function($tabung) {
-        return $tabung->statusTabung->status_tabung === 'tersedia';
-    })->map(function($tabung) {
-        return [
-            'id' => $tabung->id_tabung,
-            'text' => $tabung->kode_tabung,
-            'harga' => $tabung->jenisTabung->harga ?? 0
-        ];
-    })->values());
+    const allTabungOptions = [
+        @foreach($tabungs as $tabung)
+            {
+                id: {{ $tabung->id_tabung }},
+                text: '{{ $tabung->kode_tabung }}',
+                harga: {{ $tabung->jenisTabung->harga ?? 0 }},
+                status: '{{ $tabung->statusTabung->status_tabung }}'
+            },
+        @endforeach
+    ];
+
+    const availableTabungOptions = allTabungOptions.filter(tabung => tabung.status === 'tersedia');
 
     // Simpan daftar jenis transaksi asli dari server
-    const originalJenisTransaksiOptions = @json($jenisTransaksis->map(function($jenis) {
-        return [
-            'id' => $jenis->id_jenis_transaksi,
-            'text' => $jenis->nama_jenis_transaksi,
-            'nama' => $jenis->nama_jenis_transaksi
-        ];
-    })->values());
+    const originalJenisTransaksiOptions = [
+        @foreach($jenisTransaksis as $jenis)
+            {
+                id: {{ $jenis->id_jenis_transaksi }},
+                text: '{{ $jenis->nama_jenis_transaksi }}',
+                nama: '{{ $jenis->nama_jenis_transaksi }}'
+            },
+        @endforeach
+    ];
 
-    // Fungsi untuk memperbarui opsi tabung di semua dropdown
-    function updateTabungOptions() {
+    // Fungsi untuk memperbarui opsi tabung berdasarkan jenis transaksi
+    function updateTabungOptionsForSelect($select) {
+        const jenisTransaksi = $select.find('option:selected').data('nama') || '';
+        const $tabungSelect = $select.closest('.row').find('.tabung-select');
+        const currentValue = $tabungSelect.val();
+        $tabungSelect.find('option').not(':first').remove();
+
         const selectedTabungs = [];
         $('.tabung-select').each(function() {
-            const selectedValue = $(this).val();
-            if (selectedValue && selectedValue !== '') {
-                selectedTabungs.push(selectedValue);
+            const tabungId = $(this).val();
+            if (tabungId && tabungId !== '' && $(this).attr('id') !== $tabungSelect.attr('id')) {
+                selectedTabungs.push(tabungId);
             }
         });
 
-        $('.tabung-select').each(function() {
-            const $select = $(this);
-            const currentValue = $select.val();
-            $select.find('option').not(':first').remove(); // Simpan opsi "-- Pilih Tabung --"
+        let tabungOptions = jenisTransaksi.toLowerCase().trim() === 'isi ulang' ? allTabungOptions : availableTabungOptions;
+        tabungOptions.forEach(function(tabung) {
+            if (!selectedTabungs.includes(tabung.id.toString()) || tabung.id.toString() === currentValue) {
+                const option = new Option(tabung.text, tabung.id, false, tabung.id.toString() === currentValue);
+                option.dataset.harga = tabung.harga;
+                $tabungSelect.append(option);
+            }
+        });
 
-            originalTabungOptions.forEach(function(tabung) {
-                if (!selectedTabungs.includes(tabung.id.toString()) || tabung.id.toString() === currentValue) {
-                    const option = new Option(tabung.text, tabung.id, false, tabung.id.toString() === currentValue);
-                    option.dataset.harga = tabung.harga;
-                    $select.append(option);
-                }
-            });
+        $tabungSelect.prop('disabled', jenisTransaksi === '');
+        $tabungSelect.trigger('change.select2');
+    }
 
-            // Perbarui Select2
-            $select.trigger('change.select2');
+    // Fungsi untuk memperbarui semua opsi tabung
+    function updateTabungOptions() {
+        $('.jenis-transaksi-select').each(function() {
+            updateTabungOptionsForSelect($(this));
         });
     }
 
@@ -327,7 +338,7 @@
         });
         $('#total_transaksi').val(total);
         $('#total_transaksi_display').val(formatRupiah(total));
-        updateStatus(); // Perbarui status setelah total berubah
+        updateStatus();
     }
 
     // Fungsi untuk menambahkan detail transaksi baru
@@ -337,20 +348,6 @@
             <div class="detail-item bg-light p-3 rounded mb-3">
                 <div class="row align-items-center">
                     <div class="col-md-3 mb-3 mb-md-0">
-                        <label for="detail_transaksi_${detailCount}_id_tabung" class="font-weight-bold">Tabung</label>
-                        <select name="detail_transaksi[${detailCount}][id_tabung]" id="detail_transaksi_${detailCount}_id_tabung" class="form-control tabung-select @error('detail_transaksi.${detailCount}.id_tabung') is-invalid @enderror custom-select" required>
-                            <option value="">-- Pilih Tabung --</option>
-                            @foreach($tabungs as $tabung)
-                                @if($tabung->statusTabung->status_tabung === 'tersedia')
-                                    <option value="{{ $tabung->id_tabung }}" data-harga="{{ $tabung->jenisTabung->harga ?? 0 }}">{{ $tabung->kode_tabung }}</option>
-                                @endif
-                            @endforeach
-                        </select>
-                        @error('detail_transaksi.${detailCount}.id_tabung')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="col-md-3 mb-3 mb-md-0">
                         <label for="detail_transaksi_${detailCount}_id_jenis_transaksi" class="font-weight-bold">Jenis Transaksi</label>
                         <select name="detail_transaksi[${detailCount}][id_jenis_transaksi]" id="detail_transaksi_${detailCount}_id_jenis_transaksi" class="form-control jenis-transaksi-select @error('detail_transaksi.${detailCount}.id_jenis_transaksi') is-invalid @enderror custom-select" required>
                             <option value="">-- Pilih Jenis --</option>
@@ -359,6 +356,15 @@
                             @endforeach
                         </select>
                         @error('detail_transaksi.${detailCount}.id_jenis_transaksi')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="col-md-3 mb-3 mb-md-0">
+                        <label for="detail_transaksi_${detailCount}_id_tabung" class="font-weight-bold">Tabung</label>
+                        <select name="detail_transaksi[${detailCount}][id_tabung]" id="detail_transaksi_${detailCount}_id_tabung" class="form-control tabung-select @error('detail_transaksi.${detailCount}.id_tabung') is-invalid @enderror custom-select" disabled required>
+                            <option value="">-- Pilih Tabung --</option>
+                        </select>
+                        @error('detail_transaksi.${detailCount}.id_tabung')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
@@ -373,6 +379,7 @@
                     <div class="col-md-2 mb-3 mb-md-0">
                         <label for="detail_transaksi_${detailCount}_batas_waktu" class="font-weight-bold">Batas Waktu Peminjaman</label>
                         <input type="text" class="form-control batas-waktu-peminjaman-display" readonly value="-">
+                        <input type="hidden" name="detail_transaksi[${detailCount}][batas_waktu_peminjaman]" class="batas-waktu-peminjaman" value="">
                     </div>
                     <div class="col-md-1">
                         <button type="button" class="btn btn-danger btn-sm remove-detail mt-4" title="Hapus Detail">
@@ -386,6 +393,14 @@
         $('.detail-items').append(newDetail);
 
         // Inisialisasi Select2 untuk dropdown baru
+        $(`#detail_transaksi_${detailCount}_id_jenis_transaksi`).select2({
+            placeholder: "-- Pilih Jenis --",
+            allowClear: true
+        }).on('change', function() {
+            updateBatasWaktuPeminjaman($(this));
+            updateTabungOptionsForSelect($(this));
+        });
+
         $(`#detail_transaksi_${detailCount}_id_tabung`).select2({
             placeholder: "-- Pilih Tabung --",
             allowClear: true
@@ -397,13 +412,6 @@
             $hargaInputDisplay.val(formatRupiah(harga));
             updateTotal();
             updateTabungOptions();
-        });
-
-        $(`#detail_transaksi_${detailCount}_id_jenis_transaksi`).select2({
-            placeholder: "-- Pilih Jenis --",
-            allowClear: true
-        }).on('change', function() {
-            updateBatasWaktuPeminjaman($(this));
         });
 
         // Inisialisasi event untuk tombol hapus detail baru
@@ -426,9 +434,9 @@
 
         if (selectedType === 'akun' && akunSelect.val()) {
             peroranganSelect.prop('disabled', true).val(null).trigger('change');
-            const perorangan = akunData[akunSelect.val()]?.perorangan;
-            namaLengkapInput.val(perorangan?.nama_lengkap ?? '-');
-            perusahaanInput.val(perorangan?.perusahaan?.nama_perusahaan ?? '-');
+            const akun = akunData[akunSelect.val()];
+            namaLengkapInput.val(akun?.perorangan?.nama_lengkap ?? '-');
+            perusahaanInput.val(akun?.perorangan?.perusahaan?.nama_perusahaan ?? '-');
         } else if (selectedType === 'perorangan' && peroranganSelect.val()) {
             akunSelect.prop('disabled', true).val(null).trigger('change');
             const perorangan = peroranganData[peroranganSelect.val()];
@@ -443,16 +451,11 @@
     }
 
     $(document).ready(function() {
-        // Inisialisasi Select2 untuk akun dan perorangan
+        // Inisialisasi Select2
         $('#akun-select').select2({
             placeholder: "-- Pilih Akun --",
             allowClear: true
         }).on('change', function() {
-            if ($(this).val()) {
-                $('#perorangan-select').prop('disabled', true).val(null).trigger('change');
-            } else {
-                $('#perorangan-select').prop('disabled', false);
-            }
             handleSelection('akun');
         });
 
@@ -460,19 +463,13 @@
             placeholder: "-- Pilih Perorangan --",
             allowClear: true
         }).on('change', function() {
-            if ($(this).val()) {
-                $('#akun-select').prop('disabled', true).val(null).trigger('change');
-            } else {
-                $('#akun-select').prop('disabled', false);
-            }
             handleSelection('perorangan');
         });
 
-        // Inisialisasi Select2 untuk semua tabung-select dan jenis-transaksi-select yang ada saat load
         $('.tabung-select').select2({
             placeholder: "-- Pilih Tabung --",
             allowClear: true
-        }).on('change', function() {
+        }).prop('disabled', true).on('change', function() {
             const harga = parseInt($(this).find('option:selected').data('harga')) || 0;
             const $hargaInput = $(this).closest('.row').find('.harga-tabung');
             const $hargaInputDisplay = $(this).closest('.row').find('.harga-tabung-display');
@@ -487,19 +484,14 @@
             allowClear: true
         }).on('change', function() {
             updateBatasWaktuPeminjaman($(this));
+            updateTabungOptionsForSelect($(this));
         });
 
-        // Set harga awal dan batas waktu peminjaman berdasarkan tabung dan jenis transaksi yang dipilih
+        // Set harga dan batas waktu peminjaman awal
         $('.tabung-select').each(function() {
             const $select = $(this);
             const $hargaInput = $select.closest('.row').find('.harga-tabung');
             const $hargaInputDisplay = $select.closest('.row').find('.harga-tabung-display');
-            $select.on('select2:select', function() {
-                const harga = parseInt($select.find('option:selected').data('harga')) || 0;
-                $hargaInput.val(harga);
-                $hargaInputDisplay.val(formatRupiah(harga));
-                updateTotal();
-            });
             if ($select.val()) {
                 const harga = parseInt($select.find('option:selected').data('harga')) || 0;
                 $hargaInput.val(harga);
@@ -514,7 +506,10 @@
             updateBatasWaktuPeminjaman($(this));
         });
 
-        // Format jumlah_dibayar ke Rupiah saat input dan perbarui status serta tanggal jatuh tempo
+        // Format jumlah_dibayar
+        let jumlahDibayar = $('#jumlah_dibayar').val();
+        $('#jumlah_dibayar_display').val(formatRupiah(jumlahDibayar));
+
         $('#jumlah_dibayar_display').on('input', function() {
             let value = unformatRupiah($(this).val());
             $(this).val(formatRupiah(value));
@@ -522,23 +517,51 @@
             updateStatus();
         });
 
-        // Inisialisasi format Rupiah untuk jumlah_dibayar saat halaman dimuat
-        let jumlahDibayar = $('#jumlah_dibayar').val();
-        $('#jumlah_dibayar_display').val(formatRupiah(jumlahDibayar));
-
-        // Inisialisasi dan update tanggal dan waktu real-time
+        // Update tanggal dan waktu real-time
         updateDateTime();
-        setInterval(updateDateTime, 1000); // Update setiap detik
+        setInterval(updateDateTime, 1000);
 
         updateTotal();
         updateTabungOptions();
-        updateStatus(); // Inisialisasi status saat halaman dimuat
+        updateStatus();
 
         // Event untuk tombol hapus detail
         $(document).on('click', '.remove-detail', function() {
             $(this).closest('.detail-item').remove();
             updateTotal();
             updateTabungOptions();
+        });
+
+        // Validasi form sebelum submit
+        $('#transaksiForm').on('submit', function(e) {
+            const akunSelected = $('#akun-select').val();
+            const peroranganSelected = $('#perorangan-select').val();
+            const hasDetailTransaksi = $('.detail-item').length > 0;
+
+            if (!akunSelected && !peroranganSelected) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Peringatan!',
+                    text: 'Pilih minimal salah satu akun atau perorangan.',
+                    timer: 3000,
+                    showConfirmButton: true,
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+
+            if (!hasDetailTransaksi) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Peringatan!',
+                    text: 'Tambahkan setidaknya satu detail transaksi.',
+                    timer: 3000,
+                    showConfirmButton: true,
+                    confirmButtonText: 'OK'
+                });
+            }
         });
 
         // Tampilkan alert sukses atau error

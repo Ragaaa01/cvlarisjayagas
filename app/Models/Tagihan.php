@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
-use App\Models\Notifikasi;
 use App\Models\Transaksi;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Notifikasi;
+use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Tagihan extends Model
 {
@@ -42,6 +43,41 @@ class Tagihan extends Model
                 $this->save();
             }
         }
+    }
+
+    public function calculateLateDaysAndPeriod()
+    {
+        if ($this->status === 'lunas') {
+            return [
+                'hari_keterlambatan' => $this->hari_keterlambatan ?? 0,
+                'periode_ke' => $this->periode_ke ?? 0
+            ];
+        }
+
+        $transaksi = $this->transaksi;
+        $hari_keterlambatan = 0;
+        $periode_ke = 0;
+
+        if ($transaksi && $transaksi->tanggal_jatuh_tempo) {
+            $jatuh_tempo = Carbon::parse($transaksi->tanggal_jatuh_tempo);
+            if (now()->gt($jatuh_tempo)) {
+                $hari_keterlambatan = now()->diffInDays($jatuh_tempo);
+                $periode_ke = $hari_keterlambatan > 0 ? floor($hari_keterlambatan / 30) + 1 : 0;
+            }
+        }
+
+        // Simpan ke database jika berbeda
+        if ($this->hari_keterlambatan != $hari_keterlambatan || $this->periode_ke != $periode_ke) {
+            $this->update([
+                'hari_keterlambatan' => $hari_keterlambatan,
+                'periode_ke' => $periode_ke
+            ]);
+        }
+
+        return [
+            'hari_keterlambatan' => $hari_keterlambatan,
+            'periode_ke' => $periode_ke
+        ];
     }
 
     public function transaksi()

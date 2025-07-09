@@ -18,17 +18,18 @@ return new class extends Migration
             $table->unsignedBigInteger('id_perorangan')->nullable();
             $table->unsignedBigInteger('id_perusahaan')->nullable();
             $table->date('tanggal_transaksi');
-            $table->unsignedBigInteger('total_transaksi');
-            $table->unsignedBigInteger('jumlah_dibayar');
+            $table->decimal('total_transaksi', 10, 2);
+            $table->decimal('jumlah_dibayar', 10, 2);
             $table->enum('metode_pembayaran', ['transfer', 'tunai']);
             $table->date('tanggal_jatuh_tempo')->nullable();
             $table->date('tanggal_selesai')->nullable();
             $table->enum('status_akhir', ['success', 'failed'])->default('success');
-            $table->unsignedBigInteger('total_pembayaran');
-            $table->unsignedBigInteger('denda');
+            $table->decimal('total_pembayaran', 10, 2);
+            $table->decimal('denda', 10, 2)->default(0.00);
             $table->integer('durasi_peminjaman')->nullable();
-            $table->string('keterangan');
+            $table->string('keterangan')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('id_transaksi')->references('id_transaksi')->on('transaksis')->onDelete('cascade');
             $table->foreign('id_akun')->references('id_akun')->on('akuns')->onDelete('set null');

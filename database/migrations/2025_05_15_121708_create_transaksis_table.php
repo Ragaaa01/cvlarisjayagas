@@ -18,8 +18,8 @@ return new class extends Migration
     $table->unsignedBigInteger('id_perusahaan')->nullable();
     $table->date('tanggal_transaksi');
     $table->time('waktu_transaksi');
-    $table->unsignedBigInteger('total_transaksi', 10, 2);
-    $table->unsignedBigInteger('jumlah_dibayar', 10, 2);
+    $table->decimal('total_transaksi', 10, 2);
+    $table->decimal('jumlah_dibayar', 10, 2);
     $table->enum('metode_pembayaran', ['transfer', 'tunai']);
     $table->unsignedBigInteger('id_status_transaksi');
     $table->date('tanggal_jatuh_tempo')->nullable();

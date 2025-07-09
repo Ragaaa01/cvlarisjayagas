@@ -9,56 +9,30 @@ use App\Http\Controllers\Controller;
 
 class PeminjamanController extends Controller
 {
+    /**
+     * Menampilkan daftar peminjaman
+     */
     public function index()
     {
-        $peminjamans = Peminjaman::with('detailTransaksi.transaksi')->latest()->paginate(10);
+        $peminjamans = Peminjaman::with(['detailTransaksi.transaksi.perorangan', 'detailTransaksi.transaksi.perusahaan'])
+            ->where('status_pinjam', 'aktif')
+            ->oldest()
+            ->paginate(10);
         return view('admin.pages.peminjaman.index', compact('peminjamans'));
     }
 
-    public function create()
+    /**
+     * Menampilkan detail peminjaman
+     */
+    public function show(Peminjaman $peminjaman)
     {
-        $detailTransaksis = DetailTransaksi::all();
-        return view('admin.pages.peminjaman.create', compact('detailTransaksis'));
-    }
-
-    public function store(Request $request)
-    {
-        $request->validate([
-            'id_detail_transaksi' => 'required|exists:detail_transaksis,id_detail_transaksi',
-            'tanggal_pinjam' => 'required|date',
-            'status_pinjam' => 'required|in:aktif,selesai',
+        $peminjaman->load([
+            'detailTransaksi.transaksi.akun',
+            'detailTransaksi.transaksi.perorangan',
+            'detailTransaksi.transaksi.perusahaan',
+            'detailTransaksi.tabung.jenisTabung',
+            'detailTransaksi.jenisTransaksi'
         ]);
-
-        Peminjaman::create($request->only('id_detail_transaksi', 'tanggal_pinjam', 'status_pinjam'));
-
-        return redirect()->route('admin.peminjaman.index')->with('success', 'Peminjaman berhasil ditambahkan.');
-    }
-
-    public function edit($id)
-    {
-        $peminjaman = Peminjaman::findOrFail($id);
-        $detailTransaksis = DetailTransaksi::all();
-        return view('admin.pages.peminjaman.edit', compact('peminjaman', 'detailTransaksis'));
-    }
-
-    public function update(Request $request, $id)
-    {
-        $request->validate([
-            'id_detail_transaksi' => 'required|exists:detail_transaksis,id_detail_transaksi',
-            'tanggal_pinjam' => 'required|date',
-            'status_pinjam' => 'required|in:aktif,selesai',
-        ]);
-
-        $peminjaman = Peminjaman::findOrFail($id);
-        $peminjaman->update($request->only('id_detail_transaksi', 'tanggal_pinjam', 'status_pinjam'));
-
-        return redirect()->route('admin.peminjaman.index')->with('success', 'Peminjaman berhasil diperbarui.');
-    }
-
-    public function destroy($id)
-    {
-        $peminjaman = Peminjaman::findOrFail($id);
-        $peminjaman->delete();
-        return redirect()->route('admin.peminjaman.index')->with('success', 'Peminjaman berhasil dihapus.');
+        return view('admin.pages.peminjaman.show', compact('peminjaman'));
     }
 }

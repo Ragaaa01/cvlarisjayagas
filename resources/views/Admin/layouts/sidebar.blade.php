@@ -77,7 +77,7 @@
     <!-- Divider -->
     <hr class="sidebar-divider">
 
-    <!-- Pengaturan Transaksi (Dijadikan 2 item sejajar dengan Transaksi) -->
+    <!-- Pengaturan Transaksi -->
     <li class="nav-item {{ request()->routeIs('jenis_transaksi.index') ? 'active' : '' }}">
         <a class="nav-link" href="{{ route('jenis_transaksi.index') }}">
             <i class="fas fa-fw fa-random"></i>
@@ -102,33 +102,33 @@
     <!-- Divider -->
     <hr class="sidebar-divider">
 
-    <!-- Menu Fitur Tambahan -->
-    <li class="nav-item">
-        <a class="nav-link disabled" href="#" onclick="return false;" style="cursor: not-allowed;">
+    <!-- Tagihan dan Peminjaman -->
+    <li class="nav-item {{ request()->routeIs('tagihans.*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('admin.tagihan.index') }}">
             <i class="fas fa-fw fa-file-invoice-dollar"></i>
             <span>Tagihan</span>
         </a>
     </li>
-    <li class="nav-item">
-        <a class="nav-link disabled" href="#" onclick="return false;" style="cursor: not-allowed;">
+    <li class="nav-item {{ request()->routeIs('peminjaman.*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('admin.peminjaman.index') }}">
             <i class="fas fa-fw fa-truck-moving"></i>
             <span>Peminjaman</span>
         </a>
     </li>
-    <li class="nav-item">
-        <a class="nav-link disabled" href="#" onclick="return false;" style="cursor: not-allowed;">
+    <li class="nav-item {{ request()->routeIs('pengembalian.*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('admin.pengembalian.index') }}">
             <i class="fas fa-fw fa-undo-alt"></i>
             <span>Pengembalian</span>
         </a>
     </li>
 
     <!-- Riwayat Transaksi -->
-<li class="nav-item">
-    <a class="nav-link disabled" href="#" onclick="return false;" style="cursor: not-allowed;">
-        <i class="fas fa-fw fa-history"></i>
-        <span>Riwayat Transaksi</span>
-    </a>
-</li>
+    <li class="nav-item {{ request()->routeIs('riwayat_transaksi.*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('admin.riwayat_transaksi.index') }}">
+            <i class="fas fa-fw fa-history"></i>
+            <span>Riwayat Transaksi</span>
+        </a>
+    </li>
 
 </ul>
 <!-- End of Sidebar -->

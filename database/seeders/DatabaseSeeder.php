@@ -21,14 +21,14 @@ class DatabaseSeeder extends Seeder
             TabungSeeder::class,
             StatusTransaksiSeeder::class,
             JenisTransaksiSeeder::class,
-            TransaksiSeeder::class,
-            DetailTransaksiSeeder::class,
-            PeminjamanSeeder::class,
-            PengembalianSeeder::class,
-            TagihanSeeder::class,
-            NotifikasiTemplateSeeder::class,
-            NotifikasiSeeder::class,
-            RiwayatTransaksiSeeder::class,
+            // TransaksiSeeder::class,
+            // DetailTransaksiSeeder::class,
+            // PeminjamanSeeder::class,
+            // PengembalianSeeder::class,
+            // TagihanSeeder::class,
+            // NotifikasiTemplateSeeder::class,
+            // NotifikasiSeeder::class,
+            // RiwayatTransaksiSeeder::class,
         ]);
     }
 }
