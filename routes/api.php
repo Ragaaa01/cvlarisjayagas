@@ -4,12 +4,15 @@ use App\Http\Controllers\API\ApiAdministratorController;
 use App\Http\Controllers\API\ApiAuthController;
 use App\Http\Controllers\API\ApiJenisTabungController;
 use App\Http\Controllers\API\ApiPelangganController;
+use App\Http\Controllers\API\ApiPelangganProfileController;
 use App\Http\Controllers\API\ApiStatusTabungController;
 use App\Http\Controllers\API\ApiTabungController;
 use App\Http\Controllers\API\ApiTagihanController;
 use App\Http\Controllers\API\ApiTransaksiController;
+use App\Http\Controllers\API\ApiTransaksiPelangganController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
 
 
 
@@ -62,19 +65,19 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Pelanggan routes
-    Route::prefix('pelanggan')->group(function () {
-        Route::get('/profile', [ApiPelangganController::class, 'profile']);
-        Route::get('/jenis-tabung', [ApiJenisTabungController::class, 'index']);
-        Route::get('/jenis-tabung-tersedia', [ApiTransaksiController::class, 'getAvailableJenisTabung']);
-        Route::get('/tabung-tersedia', [ApiTabungController::class, 'getTabungsTersedia']);
-        Route::get('/tabung-aktif', [ApiTabungController::class, 'getTabungAktif']);
-        Route::get('/nearest-transaction-due-date', [ApiTagihanController::class, 'getNearestDueDate']);
-        // Route::post('/transaksi/peminjaman', [ApiTransaksiController::class, 'createPeminjaman']);
-        // Route::post('/transaksi/isi-ulang', [ApiTransaksiController::class, 'createIsiUlang']);
-        // Route::post('/transaksi/gabungan', [ApiTransaksiController::class, 'createGabungan']);
-        // Route::get('/transaksi/{id}', [ApiTransaksiController::class, 'getTransaksiDetail']); 
-        // Route::get('/riwayat-transaksi', [ApiTransaksiController::class, 'getRiwayatTransaksi']);
-        Route::get('/tagihan', [ApiTagihanController::class, 'index']);
-        Route::post('/tagihan/update-pembayaran', [ApiTagihanController::class, 'updatePembayaran']);
+    Route::prefix('pelanggan')->middleware('auth:sanctum')->group(function () {
+        // Route::get('/profile', [ApiPelangganController::class, 'profile']);
+        // Route::get('/jenis-tabung', [ApiJenisTabungController::class, 'index']);
+        // Route::get('/jenis-tabung-tersedia', [ApiTransaksiController::class, 'getAvailableJenisTabung']);
+        // Route::get('/tabung-tersedia', [ApiTabungController::class, 'getTabungsTersedia']);
+        // Route::get('/tabung-aktif', [ApiTabungController::class, 'getTabungAktif']);
+        // Route::get('/nearest-transaction-due-date', [ApiTagihanController::class, 'getNearestDueDate']);
+        // Route::get('/tagihan', [ApiTagihanController::class, 'index']);
+        // Route::post('/tagihan/update-pembayaran', [ApiTagihanController::class, 'updatePembayaran']);
+
+        Route::get('/transaksi', [ApiTransaksiPelangganController::class, 'getTransaksi']);
+
+        Route::get('/profile', [ApiPelangganProfileController::class, 'show']);
+        Route::put('/profile', [ApiPelangganProfileController::class, 'update']);
     });
 });

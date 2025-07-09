@@ -19,10 +19,10 @@ use Illuminate\Support\Facades\Log;
 
 class ApiPelangganController extends Controller
 {
-    // public function __construct()
-    // {
-    //     $this->middleware('auth:api')->except(['index', 'show', 'createOrGetPerusahaan']);
-    // }
+    public function __construct()
+    {
+        $this->middleware('auth:api');
+    }
 
     public function profile(): JsonResponse
     {
@@ -43,7 +43,7 @@ class ApiPelangganController extends Controller
             ];
 
             return response()->json([
-                'status' => true,
+                'success' => true,
                 'message' => 'Profil berhasil diambil',
                 'data' => $data,
             ], 200);
@@ -68,7 +68,7 @@ class ApiPelangganController extends Controller
                 ->get();
 
             return response()->json([
-                'status' => true,
+                'success' => true,
                 'message' => 'Daftar pelanggan berhasil diambil',
                 'data' => new ApiPelangganCollection($pelanggans),
             ], 200);
@@ -113,27 +113,27 @@ class ApiPelangganController extends Controller
         try {
             $result = DB::transaction(function () use ($request) {
                 $perusahaan = null;
-                if ($request->nama_perusahaan) {
+                if ($request['nama_perusahaan']) {
                     $perusahaan = Perusahaan::create([
-                        'nama_perusahaan' => $request->nama_perusahaan,
-                        'alamat_perusahaan' => $request->alamat_perusahaan,
-                        'email_perusahaan' => $request->email_perusahaan,
+                        'nama_perusahaan' => $request['nama_perusahaan'],
+                        'alamat_perusahaan' => $request['alamat_perusahaan'],
+                        'email_perusahaan' => $request['email_perusahaan'],
                     ]);
                 }
 
                 $perorangan = Perorangan::create([
-                    'nama_lengkap' => $request->nama_lengkap,
-                    'nik' => $request->nik,
-                    'no_telepon' => $request->no_telepon,
-                    'alamat' => $request->alamat,
+                    'nama_lengkap' => $request['nama_lengkap'],
+                    'nik' => $request['nik'],
+                    'no_telepon' => $request['no_telepon'],
+                    'alamat' => $request['alamat'],
                     'id_perusahaan' => $perusahaan?->id_perusahaan,
                 ]);
 
-                if ($request->email) {
+                if ($request['email']) {
                     Akun::create([
                         'id_perorangan' => $perorangan->id_perorangan,
-                        'email' => $request->email,
-                        'password' => bcrypt($request->password),
+                        'email' => $request['email'],
+                        'password' => bcrypt($request['password']),
                         'role' => 'pelanggan',
                         'status_aktif' => true,
                     ]);
@@ -148,7 +148,7 @@ class ApiPelangganController extends Controller
                 'data' => new ApiPelangganResource($result),
             ], 201);
         } catch (\Exception $e) {
-            \Log::error('Gagal menambah pelanggan', ['error' => $e->getMessage(), 'request' => $request->all()]);
+            Log::error('Gagal menambah pelanggan', ['error' => $e->getMessage(), 'request' => $request->$request->toArray()()]);
             return response()->json([
                 'status' => false,
                 'message' => 'Gagal menambah pelanggan: ' . $e->getMessage(),
@@ -165,18 +165,18 @@ class ApiPelangganController extends Controller
 
                 // Update Perusahaan
                 $perusahaan = $perorangan->perusahaan;
-                if ($request->nama_perusahaan) {
+                if ($request['nama_perusahaan']) {
                     if ($perusahaan) {
                         $perusahaan->update([
-                            'nama_perusahaan' => $request->nama_perusahaan,
-                            'alamat_perusahaan' => $request->alamat_perusahaan,
-                            'email_perusahaan' => $request->email_perusahaan,
+                            'nama_perusahaan' => $request['nama_perusahaan'],
+                            'alamat_perusahaan' => $request['alamat_perusahaan'],
+                            'email_perusahaan' => $request['email_perusahaan'],
                         ]);
                     } else {
                         $perusahaan = Perusahaan::create([
-                            'nama_perusahaan' => $request->nama_perusahaan,
-                            'alamat_perusahaan' => $request->alamat_perusahaan,
-                            'email_perusahaan' => $request->email_perusahaan,
+                            'nama_perusahaan' => $request['nama_perusahaan'],
+                            'alamat_perusahaan' => $request['alamat_perusahaan'],
+                            'email_perusahaan' => $request['email_perusahaan'],
                         ]);
                     }
                 } elseif ($perusahaan) {
@@ -186,25 +186,25 @@ class ApiPelangganController extends Controller
 
                 // Update Perorangan
                 $perorangan->update([
-                    'nama_lengkap' => $request->nama_lengkap,
-                    'nik' => $request->nik,
-                    'no_telepon' => $request->no_telepon,
-                    'alamat' => $request->alamat,
+                    'nama_lengkap' => $request['nama_lengkap'],
+                    'nik' => $request['nik'],
+                    'no_telepon' => $request['no_telepon'],
+                    'alamat' => $request['alamat'],
                     'id_perusahaan' => $perusahaan?->id_perusahaan,
                 ]);
 
                 // Update Akun
-                if ($request->email) {
+                if ($request['email']) {
                     if ($perorangan->akun) {
                         $perorangan->akun->update([
-                            'email' => $request->email,
-                            'password' => $request->password ? bcrypt($request->password) : $perorangan->akun->password,
+                            'email' => $request['email'],
+                            'password' => $request['password'] ? bcrypt($request['password']) : $perorangan->akun->password,
                         ]);
                     } else {
                         Akun::create([
                             'id_perorangan' => $perorangan->id_perorangan,
-                            'email' => $request->email,
-                            'password' => bcrypt($request->password),
+                            'email' => $request['email'],
+                            'password' => bcrypt($request['password']),
                             'role' => 'pelanggan',
                             'status_aktif' => true,
                         ]);
@@ -222,10 +222,10 @@ class ApiPelangganController extends Controller
                 'data' => new ApiPelangganResource($result),
             ], 200);
         } catch (\Exception $e) {
-            \Log::error('Gagal memperbarui pelanggan', [
+            Log::error('Gagal memperbarui pelanggan', [
                 'error' => $e->getMessage(),
                 'customer_id' => $id,
-                'request' => $request->all(),
+                'request' => $request->$request->toArray()(),
             ]);
             return response()->json([
                 'status' => false,
@@ -235,7 +235,8 @@ class ApiPelangganController extends Controller
         }
     }
 
-    public function destroy($id) {
+    public function destroy($id)
+    {
         $perorangan = Perorangan::findOrFail($id);
         $perorangan->delete();
 

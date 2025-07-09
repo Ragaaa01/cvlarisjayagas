@@ -20,14 +20,16 @@ class StoreApiTransaksiRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'tipe_pelanggan' => 'required|in:perorangan_tanpa_akun,perorangan_dengan_akun,perusahaan_dengan_akun',
-            'pelanggan' => 'required_if:tipe_pelanggan,perorangan_tanpa_akun|array',
-            'pelanggan.nama_lengkap' => 'required_if:tipe_pelanggan,perorangan_tanpa_akun|string|max:255',
-            'pelanggan.nik' => 'required_if:tipe_pelanggan,perorangan_tanpa_akun|string|size:16',
-            'pelanggan.no_telepon' => 'required_if:tipe_pelanggan,perorangan_tanpa_akun|string|max:15',
-            'pelanggan.alamat' => 'required_if:tipe_pelanggan,perorangan_tanpa_akun|string|max:255',
-            'id_akun' => 'nullable|integer|exists:users,id',
-            'id_perorangan' => 'nullable|integer|exists:perorangans,id_perorangan',
+
+            // 'tipe_pelanggan' tidak lagi diperlukan jika alur selalu dari pelanggan yang sudah ada
+            // Namun kita biarkan untuk fleksibilitas di masa depan
+            // 'tipe_pelanggan' => 'sometimes|in:perorangan_tanpa_akun,perorangan_dengan_akun,perusahaan_dengan_akun',
+
+            // --- PERBAIKAN UTAMA ---
+            // 'id_perorangan' sekarang wajib ada, karena pelanggan selalu dipilih dari daftar.
+            'id_akun' => 'nullable|integer|exists:akuns,id_akun', // Memeriksa ke tabel 'akuns'
+            'id_perorangan' => 'required|integer|exists:perorangans,id_perorangan',
+            
             'id_perusahaan' => 'nullable|integer|exists:perusahaans,id_perusahaan',
             'jumlah_dibayar' => 'required|numeric|min:0',
             'metode_pembayaran' => 'required|string|in:tunai,transfer',
@@ -36,6 +38,23 @@ class StoreApiTransaksiRequest extends FormRequest
             'detail_transaksis.*.id_jenis_transaksi' => 'required|integer|exists:jenis_transaksis,id_jenis_transaksi',
             'detail_transaksis.*.harga' => 'required|numeric|min:0',
             'keterangan' => 'nullable|string|max:255',
+
+            // 'tipe_pelanggan' => 'required|in:perorangan_tanpa_akun,perorangan_dengan_akun,perusahaan_dengan_akun',
+            // 'pelanggan' => 'required_if:tipe_pelanggan,perorangan_tanpa_akun|array',
+            // 'pelanggan.nama_lengkap' => 'required_if:tipe_pelanggan,perorangan_tanpa_akun|string|max:255',
+            // 'pelanggan.nik' => 'required_if:tipe_pelanggan,perorangan_tanpa_akun|string|size:16',
+            // 'pelanggan.no_telepon' => 'required_if:tipe_pelanggan,perorangan_tanpa_akun|string|max:15',
+            // 'pelanggan.alamat' => 'required_if:tipe_pelanggan,perorangan_tanpa_akun|string|max:255',
+            // 'id_akun' => 'nullable|integer|exists:users,id',
+            // 'id_perorangan' => 'nullable|integer|exists:perorangans,id_perorangan',
+            // 'id_perusahaan' => 'nullable|integer|exists:perusahaans,id_perusahaan',
+            // 'jumlah_dibayar' => 'required|numeric|min:0',
+            // 'metode_pembayaran' => 'required|string|in:tunai,transfer',
+            // 'detail_transaksis' => 'required|array|min:1',
+            // 'detail_transaksis.*.id_tabung' => 'required|integer|exists:tabungs,id_tabung',
+            // 'detail_transaksis.*.id_jenis_transaksi' => 'required|integer|exists:jenis_transaksis,id_jenis_transaksi',
+            // 'detail_transaksis.*.harga' => 'required|numeric|min:0',
+            // 'keterangan' => 'nullable|string|max:255',
         ];
     }
 
