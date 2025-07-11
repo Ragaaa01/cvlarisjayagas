@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApiTransaksiResource;
@@ -30,7 +30,7 @@ class ApiTransaksiPelangganController extends Controller
             // Mengambil data user yang terautentikasi
             $user = Auth::user();
 
-            // Jika user tidak ditemukan (seharusnya tidak terjadi karena middleware), kembalikan error.
+            // Jika user tidak ditemukan, kembalikan error.
             if (!$user) {
                 return response()->json([
                     'success' => false,
@@ -39,11 +39,14 @@ class ApiTransaksiPelangganController extends Controller
             }
 
             // Mengambil semua transaksi yang berelasi dengan id_akun user.
-            // Memuat relasi yang dibutuhkan oleh aplikasi Flutter:
-            // - tagihan: Untuk menampilkan status lunas/belum lunas.
-            // - detailTransaksis: Untuk menghitung jumlah item.
-            $transaksis = Transaksi::with(['tagihan', 'detailTransaksis'])
-                ->where('id_akun', $user->id_akun)
+            $transaksis = Transaksi::where('id_akun', $user->id_akun)
+                // --- PERBAIKAN UTAMA DI SINI ---
+                // Memuat semua relasi yang dibutuhkan oleh Flutter dalam satu query.
+                ->with([
+                    'statusTransaksi',
+                    'latestTagihan',      // WAJIB untuk status dan sisa tagihan terakhir.
+                    'detailTransaksis'    // WAJIB untuk menghitung jumlah item.
+                ])
                 ->latest() // Mengurutkan dari yang terbaru
                 ->get();
 

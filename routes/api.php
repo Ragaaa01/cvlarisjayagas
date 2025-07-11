@@ -73,14 +73,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Pelanggan routes
     Route::prefix('pelanggan')->middleware('auth:sanctum')->group(function () {
-        // Route::get('/profile', [ApiPelangganController::class, 'profile']);
-        // Route::get('/jenis-tabung', [ApiJenisTabungController::class, 'index']);
-        // Route::get('/jenis-tabung-tersedia', [ApiTransaksiController::class, 'getAvailableJenisTabung']);
-        // Route::get('/tabung-tersedia', [ApiTabungController::class, 'getTabungsTersedia']);
-        // Route::get('/tabung-aktif', [ApiTabungController::class, 'getTabungAktif']);
-        // Route::get('/nearest-transaction-due-date', [ApiTagihanController::class, 'getNearestDueDate']);
-        // Route::get('/tagihan', [ApiTagihanController::class, 'index']);
-        // Route::post('/tagihan/update-pembayaran', [ApiTagihanController::class, 'updatePembayaran']);
 
         Route::get('/transaksi', [ApiTransaksiPelangganController::class, 'getTransaksi']);
 

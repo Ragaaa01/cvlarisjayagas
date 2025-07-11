@@ -29,6 +29,7 @@ class ApiTagihanResource extends JsonResource
             'id_transaksi' => $this->id_transaksi,
             'nama_pelanggan' => $namaPelanggan,
             'total_transaksi' => (float) $this->transaksi->total_transaksi,
+            'jumlah_dibayar'      => (float) $this->jumlah_dibayar,
             'sisa' => (float) $this->sisa,
             'status' => $this->status,
             'tanggal_jatuh_tempo' => $this->transaksi->tanggal_jatuh_tempo,
