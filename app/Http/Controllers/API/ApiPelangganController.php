@@ -63,14 +63,14 @@ class ApiPelangganController extends Controller
     public function index()
     {
         try {
-            $pelanggans = Perorangan::with(['akun', 'perusahaan'])
+            $pelanggan = Perorangan::with(['akun', 'perusahaan'])
                 ->whereNull('deleted_at')
                 ->get();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Daftar pelanggan berhasil diambil',
-                'data' => new ApiPelangganCollection($pelanggans),
+                'data' => new ApiPelangganCollection($pelanggan),
             ], 200);
         } catch (\Exception $e) {
             Log::error('Gagal mengambil daftar pelanggan', ['error' => $e->getMessage()]);

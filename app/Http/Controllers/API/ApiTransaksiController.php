@@ -36,12 +36,16 @@ class ApiTransaksiController extends Controller
         // Ini memastikan data perusahaan akan selalu termuat, baik dari
         // relasi langsung (pelanggan) maupun dari relasi tidak langsung (akun).
         return $transaksi->load([
+            'perorangan', // Memuat perorangan (pelanggan) dari transaksi
+            'akun', // Memuat akun yang terkait dengan transaksi
+            'perusahaan', // Memuat perusahaan dari perorangan (pelanggan)
+            'akun.perorangan', // Memuat perorangan dari akun yang terkait
             'perorangan.perusahaan', // Memuat perusahaan dari perorangan walk-in
             'akun.perorangan.perusahaan', // Memuat perusahaan dari perorangan yang punya akun
             'statusTransaksi',
             'detailTransaksis.tabung.jenisTabung',
             'tagihans',
-            'latestTagihan'
+            'latestTagihan',
         ]);
     }
     /**
@@ -169,116 +173,10 @@ class ApiTransaksiController extends Controller
             // $transaksi->load(['perorangan', 'akun.perorangan', 'statusTransaksi', 'detailTransaksis.tabung.jenisTabung', 'tagihans', 'latestTagihan']);
             $this->loadTransaksiRelations($transaksi);
             return response()->json(['success' => true, 'message' => 'Transaksi berhasil dibuat', 'data' => new ApiTransaksiResource($transaksi)], 201);
+
+            event(new \App\Events\TransactionStatusCheck($transaksi));
         });
     }
-
-    // /**
-    //  * Simpan transaksi baru beserta detail, peminjaman, dan tagihan.
-    //  *
-    //  * @param StoreApiTransaksiRequest $request
-    //  * @return JsonResponse
-    //  */
-    // public function store(StoreApiTransaksiRequest $request): JsonResponse
-    // {
-    //     try {
-    //         return DB::transaction(function () use ($request) {
-    //             // Handle pelanggan
-    //             $idAkun = $request['id_akun'];
-    //             $idPerorangan = $request['id_perorangan'] ?? null;
-    //             $idPerusahaan = $request['id_perusahaan'] ?? null;
-    //             $detailTransaksis = $request['detail_transaksis'];
-    //             $totalTransaksi = 0;
-
-    //             $detailTransaksis = $request['detail_transaksis'];
-    //             $idTabungs = array_column($detailTransaksis, 'id_tabung');
-
-    //             $tabungs = Tabung::with('jenisTabung', 'statusTabung')->whereIn('id_tabung', $idTabungs)->get()->keyBy('id_tabung');
-
-    //             // Validasi dan hitung total transaksi
-    //             $totalTransaksi = 0;
-    //             foreach ($detailTransaksis as $detail) {
-    //                 $tabung = $tabungs[$detail['id_tabung']] ?? null;
-
-    //                 if (!$tabung) {
-    //                     throw new Exception("Tabung dengan ID {$detail['id_tabung']} tidak ditemukan.");
-    //                 }
-    //                 if ($tabung->statusTabung->status_tabung !== 'tersedia') {
-    //                     throw new Exception("Tabung {$tabung->kode_tabung} tidak tersedia");
-    //                 }
-    //                 if ($detail['harga'] != $tabung->jenisTabung->harga) {
-    //                     throw new Exception("Harga tabung {$tabung->kode_tabung} tidak valid");
-    //                 }
-    //                 $totalTransaksi += $detail['harga'];
-    //             }
-
-    //             // Buat transaksi
-    //             $transaksi = Transaksi::create([
-    //                 'id_akun' => $idAkun,
-    //                 'id_perorangan' => $idPerorangan,
-    //                 'id_perusahaan' => $idPerusahaan,
-    //                 'tanggal_transaksi' => now()->toDateString(),
-    //                 'waktu_transaksi' => now()->toTimeString(),
-    //                 'total_transaksi' => $totalTransaksi,
-    //                 'jumlah_dibayar' => $request['jumlah_dibayar'],
-    //                 'metode_pembayaran' => $request['metode_pembayaran'],
-    //                 'id_status_transaksi' => StatusTransaksi::PENDING, // Pending
-    //                 'tanggal_jatuh_tempo' => in_array(1, array_column($request['detail_transaksis'], 'id_jenis_transaksi'))
-    //                     ? now()->addDays(30)->toDateString()
-    //                     : null,
-    //             ]);
-
-    //             // Simpan detail transaksi dan peminjaman
-    //             foreach ($detailTransaksis as $detail) {
-    //                 $tabung = $tabungs[$detail['id_tabung']];
-    //                 $detailTransaksi = DetailTransaksi::create([
-    //                     'id_transaksi' => $transaksi->id_transaksi,
-    //                     'id_tabung' => $detail['id_tabung'],
-    //                     'id_jenis_transaksi' => $detail['id_jenis_transaksi'],
-    //                     'harga' => $detail['harga'],
-    //                     'batas_waktu_peminjaman' => $detail['id_jenis_transaksi'] == 1
-    //                         ? now()->addDays(30)->toDateString()
-    //                         : null,
-    //                 ]);
-
-    //                 if ($detail['id_jenis_transaksi'] == 1) { // Peminjaman
-    //                     Peminjaman::create([
-    //                         'id_detail_transaksi' => $detailTransaksi->id_detail_transaksi,
-    //                         'tanggal_pinjam' => now()->toDateString(),
-    //                         'status_pinjam' => 'aktif',
-    //                     ]);
-    //                 }
-    //             }
-
-    //             Tabung::whereIn('id_tabung', $idTabungs)->update(['id_status_tabung' => StatusTabung::DIPINJAM]); // ID 2 = Dipinjam
-
-    //             // Buat tagihan
-    //             $sisa = $totalTransaksi - $request['jumlah_dibayar'];
-    //             Tagihan::create([
-    //                 'id_transaksi' => $transaksi->id_transaksi,
-    //                 'jumlah_dibayar' => $request['jumlah_dibayar'],
-    //                 'sisa' => $sisa,
-    //                 'status' => $sisa <= 0 ? 'lunas' : 'belum_lunas',
-    //                 'tanggal_bayar_tagihan' => $sisa <= 0 ? now()->toDateString() : null,
-    //                 'hari_keterlambatan' => 0,
-    //                 'periode_ke' => 1,
-    //                 'keterangan' => $request->keterangan ?? null,
-    //             ]);
-
-    //             return response()->json([
-    //                 'success' => true,
-    //                 'message' => 'Transaksi berhasil dibuat',
-    //                 'data' => new ApiTransaksiResource($transaksi->load('detailTransaksis', 'tagihans')),
-    //             ], 201);
-    //         });
-    //     } catch (Exception $e) {
-    //         Log::error('Gagal membuat transaksi: ' . $e->getMessage());
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Gagal membuat transaksi: ' . $e->getMessage(),
-    //             'data' => null,
-    //         ], 500);
-    //     }
-    // }
 
     /**
      * Tampilkan detail transaksi.
@@ -381,29 +279,29 @@ class ApiTransaksiController extends Controller
      *
      * @return JsonResponse
      */
-    public function getRiwayatTransaksi(): JsonResponse
-    {
-        try {
-            $user = auth()->user();
-            $transaksis = Transaksi::with(['detailTransaksis.tabung.jenisTabung', 'statusTransaksi', 'tagihans'])
-                ->where('id_akun', $user->id_akun)
-                ->latest()
-                ->get(); // Tambahkan get() untuk mengeksekusi query
+    // public function getRiwayatTransaksi(): JsonResponse
+    // {
+    //     try {
+    //         $user = auth()->user();
+    //         $transaksis = Transaksi::with(['detailTransaksis.tabung.jenisTabung', 'statusTransaksi', 'tagihans'])
+    //             ->where('id_akun', $user->id_akun)
+    //             ->latest()
+    //             ->get(); // Tambahkan get() untuk mengeksekusi query
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Riwayat transaksi berhasil diambil',
-                'data' => ApiTransaksiResource::collection($transaksis),
-            ], 200);
-        } catch (Exception $e) {
-            Log::error('Gagal mengambil riwayat transaksi: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengambil riwayat transaksi: ' . $e->getMessage(),
-                'data' => null,
-            ], 500);
-        }
-    }
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Riwayat transaksi berhasil diambil',
+    //             'data' => ApiTransaksiResource::collection($transaksis),
+    //         ], 200);
+    //     } catch (Exception $e) {
+    //         Log::error('Gagal mengambil riwayat transaksi: ' . $e->getMessage());
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Gagal mengambil riwayat transaksi: ' . $e->getMessage(),
+    //             'data' => null,
+    //         ], 500);
+    //     }
+    // }
 
     /**
      * Menerima pembayaran, membuat catatan pembayaran baru,
@@ -450,15 +348,6 @@ class ApiTransaksiController extends Controller
                 }
                 $transaksi->save();
 
-                // 5. Muat ulang semua relasi yang dibutuhkan oleh ApiTransaksiResource.
-                // $transaksi = $transaksi->fresh()->load([
-                //     'perorangan',
-                //     'akun.perorangan',
-                //     'statusTransaksi',
-                //     'detailTransaksis.tabung.jenisTabung',
-                //     'tagihans',
-                //     'latestTagihan'
-                // ]);
                 $this->loadTransaksiRelations($transaksi);
 
                 return response()->json([

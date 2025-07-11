@@ -15,16 +15,23 @@ class ApiTagihanResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // Logika untuk mendapatkan nama pelanggan
+        $transaksi = $this->transaksi;
+        $namaPelanggan = 'Pelanggan';
+        if ($transaksi->akun?->perorangan) {
+            $namaPelanggan = $transaksi->akun->perorangan->nama_lengkap;
+        } elseif ($transaksi->perorangan) {
+            $namaPelanggan = $transaksi->perorangan->nama_lengkap;
+        }
+
         return [
             'id_tagihan' => $this->id_tagihan,
             'id_transaksi' => $this->id_transaksi,
-            'jumlah_dibayar' => $this->jumlah_dibayar,
-            'sisa' => $this->sisa,
+            'nama_pelanggan' => $namaPelanggan,
+            'total_transaksi' => (float) $this->transaksi->total_transaksi,
+            'sisa' => (float) $this->sisa,
             'status' => $this->status,
-            'tanggal_bayar_tagihan' => $this->tanggal_bayar_tagihan
-                ? Carbon::parse($this->tanggal_bayar_tagihan)->format('Y-m-d')
-                : null,
-            'keterangan' => $this->keterangan,
+            'tanggal_jatuh_tempo' => $this->transaksi->tanggal_jatuh_tempo,
         ];
     }
 }

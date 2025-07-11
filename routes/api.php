@@ -5,6 +5,9 @@ use App\Http\Controllers\API\ApiAuthController;
 use App\Http\Controllers\API\ApiJenisTabungController;
 use App\Http\Controllers\API\ApiPelangganController;
 use App\Http\Controllers\API\ApiPelangganProfileController;
+use App\Http\Controllers\API\ApiPeminjamanController;
+use App\Http\Controllers\Api\ApiPengembalianController;
+use App\Http\Controllers\API\ApiRiwayatTransaksiController;
 use App\Http\Controllers\API\ApiStatusTabungController;
 use App\Http\Controllers\API\ApiTabungController;
 use App\Http\Controllers\API\ApiTagihanController;
@@ -12,11 +15,7 @@ use App\Http\Controllers\API\ApiTransaksiController;
 use App\Http\Controllers\API\ApiTransaksiPelangganController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
-
-
-
-
+use Spatie\FlareClient\Api;
 
 // routes/api.php
 Route::post('/login', [ApiAuthController::class, 'login']);
@@ -60,8 +59,16 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/transaksi', [ApiTransaksiController::class, 'store']);
         Route::get('/transaksi/{id}', [ApiTransaksiController::class, 'show']);
         Route::put('/transaksi/{id}', [ApiTransaksiController::class, 'update']);
-        Route::get('/riwayat-transaksi', [ApiTransaksiController::class, 'getRiwayatTransaksi']);
         Route::post('/transaksi/{id}/bayar', [ApiTransaksiController::class, 'bayarTagihan']);
+
+        Route::get('/riwayat-transaksi', [ApiRiwayatTransaksiController::class, 'index']);
+
+        Route::post('/pengembalian', [ApiPengembalianController::class, 'store']);
+
+        Route::get('/peminjaman/aktif', [ApiPeminjamanController::class, 'indexAktif']);
+
+        Route::get('/tagihan', [ApiTagihanController::class, 'index']);
+        Route::post('/tagihan/{tagihan}/bayar', [ApiTagihanController::class, 'bayar']);
     });
 
     // Pelanggan routes

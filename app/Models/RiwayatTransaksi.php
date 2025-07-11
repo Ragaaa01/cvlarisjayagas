@@ -14,10 +14,21 @@ class RiwayatTransaksi extends Model
     protected $primaryKey = 'id_riwayat_transaksi';
 
     protected $fillable = [
-        'id_transaksi', 'id_akun', 'id_perorangan', 'id_perusahaan', 'tanggal_transaksi',
-        'total_transaksi', 'jumlah_dibayar', 'metode_pembayaran',
-        'tanggal_jatuh_tempo', 'tanggal_selesai', 'status_akhir',
-        'total_pembayaran', 'denda', 'durasi_peminjaman', 'keterangan'
+        'id_transaksi',
+        'id_akun',
+        'id_perorangan',
+        'id_perusahaan',
+        'tanggal_transaksi',
+        'total_transaksi',
+        'jumlah_dibayar',
+        'metode_pembayaran',
+        'tanggal_jatuh_tempo',
+        'tanggal_selesai',
+        'status_akhir',
+        'total_pembayaran',
+        'denda',
+        'durasi_peminjaman',
+        'keterangan'
     ];
 
     protected $casts = [

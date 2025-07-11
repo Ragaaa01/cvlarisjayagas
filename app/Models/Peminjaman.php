@@ -13,7 +13,7 @@ class Peminjaman extends Model
     protected $fillable = ['id_detail_transaksi', 'tanggal_pinjam', 'status_pinjam'];
 
     protected $casts = [
-        'tanggal_pinjam' => 'datetime', // Konversi otomatis ke Carbon
+        'tanggal_pinjam' => 'date', // Konversi otomatis ke Carbon
     ];
 
     public function detailTransaksi()

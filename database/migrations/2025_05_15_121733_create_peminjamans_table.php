@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('peminjamans', function (Blueprint $table) {
             $table->id('id_peminjaman');
             $table->unsignedBigInteger('id_detail_transaksi');
-            $table->dateTime('tanggal_pinjam');
+            $table->date('tanggal_pinjam');
             $table->enum('status_pinjam', ['aktif', 'selesai']);
             $table->timestamps();
 
