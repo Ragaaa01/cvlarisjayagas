@@ -11,17 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-         Schema::create('pengembalians', function (Blueprint $table) {
+        Schema::create('pengembalians', function (Blueprint $table) {
             $table->id('id_pengembalian');
             $table->unsignedBigInteger('id_peminjaman');
             $table->date('tanggal_kembali');
             $table->enum('kondisi_tabung', ['baik', 'rusak']);
-            $table->string('keterangan');
+            $table->string('keterangan')->nullable();
             $table->timestamps();
 
             $table->foreign('id_peminjaman')->references('id_peminjaman')->on('peminjamans')->onDelete('cascade');
         });
-
     }
 
     /**
