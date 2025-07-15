@@ -31,7 +31,7 @@ class ApiPeroranganResource extends JsonResource
 
             // Secara kondisional menyertakan data relasi 'akun' jika sudah di-load
             // Ini berguna agar tidak selalu memuat data yang tidak perlu
-            // 'akun' => new ApiAkunResource($this->whenLoaded('akun')),
+            'akun' => new ApiAkunResource($this->whenLoaded('akun')),
         ];
     }
 }

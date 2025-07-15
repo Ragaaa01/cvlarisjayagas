@@ -33,6 +33,9 @@ class ApiTagihanResource extends JsonResource
             'sisa' => (float) $this->sisa,
             'status' => $this->status,
             'tanggal_jatuh_tempo' => $this->transaksi->tanggal_jatuh_tempo,
+            'tanggal_bayar_tagihan' => $this->tanggal_bayar_tagihan
+                ? Carbon::parse($this->tanggal_bayar_tagihan)->toDateTimeString()
+                : null,
         ];
     }
 }

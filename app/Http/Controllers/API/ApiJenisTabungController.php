@@ -5,8 +5,9 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\JenisTabung;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ApiJenisTabungController extends Controller
 {
@@ -25,7 +26,7 @@ class ApiJenisTabungController extends Controller
                 'data' => $jenisTabung,
             ], 200);
         } catch (\Exception $e) {
-            \Log::error('Gagal mengambil jenis tabung', [
+            Log::error('Gagal mengambil jenis tabung', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);

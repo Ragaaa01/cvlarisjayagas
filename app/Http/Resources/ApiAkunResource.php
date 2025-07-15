@@ -19,7 +19,7 @@ class ApiAkunResource extends JsonResource
             'id_perorangan' => $this->id_perorangan,
             'email' => $this->email,
             'role' => $this->role,
-            'status_aktif' => $this->status_aktif,
+            'status_aktif' => (bool) $this->status_aktif,
 
             // Secara kondisional menyertakan data relasi 'perorangan' jika sudah di-load.
             // Ini adalah praktik terbaik untuk mencegah pemuatan data yang tidak perlu

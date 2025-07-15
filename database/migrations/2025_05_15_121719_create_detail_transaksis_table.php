@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('detail_transaksis', function (Blueprint $table) {
             $table->id('id_detail_transaksi');
             $table->unsignedBigInteger('id_transaksi');
-            $table->unsignedBigInteger('id_tabung');
+            $table->unsignedBigInteger('id_tabung')->nullable();
             $table->unsignedBigInteger('id_jenis_transaksi');
             $table->decimal('harga', 15, 2);
             $table->date('batas_waktu_peminjaman')->nullable();

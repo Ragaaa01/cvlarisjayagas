@@ -70,61 +70,113 @@ class ApiTabungController extends Controller
         }
     }
 
+    // /**
+    //  * Menampilkan data tabung spesifik berdasarkan kode_tabung.
+    //  *
+    //  * @param Request $request
+    //  * @return JsonResponse
+    //  */
+    // public function showByKode(Request $request): JsonResponse
+    // {
+    //     try {
+    //         // 1. Validasi bahwa parameter 'kode_tabung' ada.
+    //         $validated = $request->validate([
+    //             'kode_tabung' => 'required|string',
+    //         ]);
+
+    //         // Ambil kode yang sudah divalidasi dan dibersihkan dari spasi.
+    //         $kodeTabung = trim($validated['kode_tabung']);
+
+    //         Log::info('Mencari tabung dengan kode: \'' . $kodeTabung . '\'');
+
+    //         // 2. Gunakan query 'where' standar. Ini lebih bersih dan efisien.
+    //         //    Secara default, ini case-insensitive di sebagian besar setup MySQL.
+    //         $tabung = Tabung::with(['jenisTabung', 'statusTabung'])
+    //             ->where('kode_tabung', $kodeTabung)
+    //             ->first();
+
+    //         // 3. Periksa apakah tabung ditemukan.
+    //         if (!$tabung) {
+    //             Log::warning('Tabung tidak ditemukan untuk kode: ' . $kodeTabung);
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'Kode tabung tidak ditemukan',
+    //                 'data' => null,
+    //             ], 404);
+    //         }
+
+    //         Log::info('Tabung ditemukan: ' . json_encode($tabung));
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Data tabung berhasil diambil',
+    //             'data' => new ApiTabungResource($tabung),
+    //         ], 200);
+    //     } catch (\Illuminate\Validation\ValidationException $e) {
+    //         // Tangani error validasi
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Validasi gagal: ' . $e->getMessage(),
+    //             'data' => null
+    //         ], 422);
+    //     } catch (\Exception $e) {
+    //         // Tangani error lainnya
+    //         Log::error('Error saat mengambil data tabung berdasarkan kode: ' . $e->getMessage());
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Gagal mengambil data tabung: Terjadi kesalahan pada server.',
+    //             'data' => null,
+    //         ], 500);
+    //     }
+    // }
+
     /**
-     * Menampilkan data tabung spesifik berdasarkan kode_tabung.
+     * Menampilkan data tabung spesifik berdasarkan kode_tabung dari parameter URL.
      *
-     * @param Request $request
+     * @param string $kode_tabung
      * @return JsonResponse
      */
-    public function showByKode(Request $request): JsonResponse
+    public function showByKode(string $kode_tabung): JsonResponse
     {
         try {
-            // 1. Validasi bahwa parameter 'kode_tabung' ada.
-            $validated = $request->validate([
-                'kode_tabung' => 'required|string',
-            ]);
+            // Kode tabung sekarang diterima langsung sebagai argumen fungsi.
+            // trim() untuk membersihkan spasi yang tidak sengaja terkirim.
+            $kodeTabungClean = trim($kode_tabung);
 
-            // Ambil kode yang sudah divalidasi dan dibersihkan dari spasi.
-            $kodeTabung = trim($validated['kode_tabung']);
+            Log::info('Mencari tabung dengan kode: \'' . $kodeTabungClean . '\'');
 
-            Log::info('Mencari tabung dengan kode: \'' . $kodeTabung . '\'');
-
-            // 2. Gunakan query 'where' standar. Ini lebih bersih dan efisien.
-            //    Secara default, ini case-insensitive di sebagian besar setup MySQL.
+            // Gunakan query 'where' untuk mencari tabung.
             $tabung = Tabung::with(['jenisTabung', 'statusTabung'])
-                ->where('kode_tabung', $kodeTabung)
+                ->where('kode_tabung', $kodeTabungClean)
                 ->first();
 
-            // 3. Periksa apakah tabung ditemukan.
+            // Periksa apakah tabung ditemukan.
             if (!$tabung) {
-                Log::warning('Tabung tidak ditemukan untuk kode: ' . $kodeTabung);
+                Log::warning('Tabung tidak ditemukan untuk kode: ' . $kodeTabungClean);
                 return response()->json([
                     'success' => false,
                     'message' => 'Kode tabung tidak ditemukan',
-                    'data' => null,
                 ], 404);
             }
 
-            Log::info('Tabung ditemukan: ' . json_encode($tabung));
+            // Tambahan: Validasi status tabung untuk alokasi
+            if ($tabung->statusTabung->status_tabung !== 'tersedia') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tabung dengan kode ' . $kodeTabungClean . ' tidak tersedia (status: ' . $tabung->statusTabung->status_tabung . ').',
+                ], 422); // 422 Unprocessable Entity
+            }
+
+            Log::info('Tabung ditemukan dan tersedia: ' . json_encode($tabung));
             return response()->json([
                 'success' => true,
-                'message' => 'Data tabung berhasil diambil',
+                'message' => 'Data tabung berhasil diambil dan tersedia.',
                 'data' => new ApiTabungResource($tabung),
             ], 200);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            // Tangani error validasi
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal: ' . $e->getMessage(),
-                'data' => null
-            ], 422);
         } catch (\Exception $e) {
-            // Tangani error lainnya
             Log::error('Error saat mengambil data tabung berdasarkan kode: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mengambil data tabung: Terjadi kesalahan pada server.',
-                'data' => null,
             ], 500);
         }
     }

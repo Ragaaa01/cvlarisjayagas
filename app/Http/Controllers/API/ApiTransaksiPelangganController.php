@@ -38,16 +38,13 @@ class ApiTransaksiPelangganController extends Controller
                 ], 401);
             }
 
-            // Mengambil semua transaksi yang berelasi dengan id_akun user.
             $transaksis = Transaksi::where('id_akun', $user->id_akun)
-                // --- PERBAIKAN UTAMA DI SINI ---
-                // Memuat semua relasi yang dibutuhkan oleh Flutter dalam satu query.
                 ->with([
                     'statusTransaksi',
                     'latestTagihan',      // WAJIB untuk status dan sisa tagihan terakhir.
                     'detailTransaksis'    // WAJIB untuk menghitung jumlah item.
                 ])
-                ->latest() // Mengurutkan dari yang terbaru
+                ->latest()
                 ->get();
 
             return response()->json([

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApiPeroranganResource;
+use App\Models\Perorangan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -28,16 +29,13 @@ class ApiPelangganProfileController extends Controller
     public function show(Request $request)
     {
         $user = $request->user();
-        $perorangan = $user->perorangan;
+        // $perorangan = $user->perorangan;
+        $perorangan = Perorangan::with('akun')->find($user->id_perorangan);
 
         // Jika data perorangan tidak ada, beri error
         if (!$perorangan) {
             return response()->json(['success' => false, 'message' => 'Data profil tidak ditemukan.'], 404);
         }
-
-        // --- TAMBAHKAN BARIS INI ---
-        // Memuat relasi 'akun' pada objek perorangan
-        $perorangan->load('akun');
 
         return response()->json([
             'success' => true,
