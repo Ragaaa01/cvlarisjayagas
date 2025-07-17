@@ -4,6 +4,8 @@ namespace App\Providers;
 
 // use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Notification;
+use NotificationChannels\Fcm\FcmChannel;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -24,5 +26,8 @@ class AuthServiceProvider extends ServiceProvider
         $this->registerPolicies();
 
         //
+        Notification::extend('firebase', function ($app) {
+            return new FcmChannel();
+        });
     }
 }

@@ -16,6 +16,7 @@ class ApiDetailTransaksiPelangganController extends Controller
      */
     public function show(Request $request, Transaksi $transaksi)
     {
+
         // --- KEAMANAN PENTING ---
         // Pastikan transaksi yang diminta adalah milik user yang sedang login.
         if ($request->user()->id_akun !== $transaksi->id_akun) {

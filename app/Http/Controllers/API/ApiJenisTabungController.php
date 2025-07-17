@@ -47,8 +47,8 @@ class ApiJenisTabungController extends Controller
         $jenis_tabungs = JenisTabung::withCount(['tabungs' => function ($query) {
             $query->where('id_status_tabung', 1); // Hanya hitung tabung yang tersedia
         }])
-        ->having('tabungs_count', '>', 0)
-        ->get();
+            ->having('tabungs_count', '>', 0)
+            ->get();
 
         return response()->json([
             'success' => true,

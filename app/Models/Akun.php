@@ -12,6 +12,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
+
 class Akun extends Authenticatable // Extend Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
@@ -20,11 +21,11 @@ class Akun extends Authenticatable // Extend Authenticatable
     protected $primaryKey = 'id_akun';
 
     protected $fillable = ['id_perorangan', 'email', 'password', 'role', 'status_aktif'];
-     protected $hidden = ['password', 'remember_token'];
-     protected $casts = [
-    'id_akun' => 'integer',
-    'status_aktif' => 'boolean',
-];
+    protected $hidden = ['password', 'remember_token'];
+    protected $casts = [
+        'id_akun' => 'integer',
+        'status_aktif' => 'boolean',
+    ];
 
     public function perorangan()
     {
@@ -39,5 +40,15 @@ class Akun extends Authenticatable // Extend Authenticatable
     public function riwayatTransaksis()
     {
         return $this->hasMany(RiwayatTransaksi::class, 'id_akun');
+    }
+
+    public function fcmTokens()
+    {
+        return $this->hasMany(FcmToken::class, 'id_akun', 'id_akun');
+    }
+
+    public function routeNotificationForFcm()
+    {
+        return $this->fcmTokens->pluck('token')->toArray();
     }
 }

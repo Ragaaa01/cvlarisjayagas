@@ -18,21 +18,29 @@ use App\Http\Controllers\API\ApiTagihanController;
 use App\Http\Controllers\API\ApiTagihanPelangganController;
 use App\Http\Controllers\API\ApiTransaksiController;
 use App\Http\Controllers\API\ApiTransaksiPelangganController;
+use App\Http\Controllers\API\Firebase\FcmTokenController;
 use App\Http\Controllers\API\MidtransWebhookController;
+use App\Http\Controllers\API\Pelanggan\ApiNotifikasiPelangganController;
 use App\Http\Controllers\API\PembayaranController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Spatie\FlareClient\Api;
 
+
+
 // routes/api.php
 Route::post('/login', [ApiAuthController::class, 'login']);
 Route::post('/register', [ApiAuthController::class, 'register']);
 
-// Midtrans Webhook Route
-Route::post('/webhook/midtrans', [MidtransWebhookController::class, 'handle']);
-
 // Authenticated routes
 Route::middleware('auth:sanctum')->group(function () {
+
+    // FCM Token Management
+    Route::post('/user/fcm-token', [FcmTokenController::class, 'store']);
+
+    // Midtrans Webhook Route
+    Route::post('/webhook/midtrans', [MidtransWebhookController::class, 'handle']);
+
     // Logout
     Route::post('/logout', [ApiAuthController::class, 'logout']);
 
@@ -122,6 +130,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/pengajuan', [ApiPengajuanPelangganController::class, 'store']);
         Route::post('/pengajuan/create-with-payment', [ApiPengajuanPelangganController::class, 'store']);
 
-        Route::get('/jenis-tabung', [ApiJenisTabungController::class, 'index']);
+
+        Route::get('/jenis-tabung', [ApiJenisTabungController::class, 'getAvailableJenisTabung']);
+
+        // Notifikasi Pelanggan Routes
+        Route::get('/notifikasi', [ApiNotifikasiPelangganController::class, 'index']);
+        Route::post('/notifikasi/{notifikasi}/baca', [ApiNotifikasiPelangganController::class, 'markAsRead']);
     });
 });

@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class NotifikasiTemplate extends Model
 {
-    protected $table = 'notifikasi_template';
-   protected $primaryKey = 'id_template';
+    protected $table = 'notifikasi_templates';
+    protected $primaryKey = 'id_template';
 
     protected $fillable = ['nama_template', 'hari_set', 'judul', 'isi'];
 
