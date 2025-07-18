@@ -61,7 +61,7 @@ Route::middleware('auth:sanctum')->group(function () {
         // Tabung Management routes
         Route::get('/tabung', [ApiTabungController::class, 'index']);
         Route::get('/tabung/{id}', [ApiTabungController::class, 'show']);
-        // Route::get('/tabung-kode', [ApiTabungController::class, 'showByKode']);
+        Route::get('/tabung/kode/{kode_tabung}', [ApiTabungController::class, 'showByKodeTabung']);
         Route::get('/tabung-kode/{kode_tabung}', [ApiTabungController::class, 'showByKode']);
         Route::post('/tabung', [ApiTabungController::class, 'store']);
         Route::put('/tabung/{id}', [ApiTabungController::class, 'update']);
